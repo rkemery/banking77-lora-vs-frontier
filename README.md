@@ -17,7 +17,7 @@ Every arm is scored on the same 3,080 test messages with accuracy, macro-F1, pai
 | gpt-6-luna zero-shot, label descriptions | pending live run: `make prompt-luna-zeroshot` | | | | | |
 | gpt-6-luna, 20 retrieved examples | pending live run: `make prompt-luna-fewshot` | | | | | |
 | gpt-6-sol, 20 retrieved examples | pending live run: `make prompt-sol-fewshot` | | | | | |
-| Qwen3-8B-Base QLoRA r16 (Colab T4) | not run, optional (`notebooks/qwen3_8b_qlora_colab.ipynb`), no result claimed | | | | | |
+| Qwen3-8B-Base QLoRA r16 (one A10G, Hugging Face Jobs) | pending GPU run: `scripts/launch_hf_job.py` | | | | | |
 
 n = 3,080 test items (40 per class) for every row. CIs are percentile bootstraps over items (10,000 resamples). The dedup column drops the 418 test items whose nearest training message has the same label at character n-gram cosine >= 0.90. ECE is top-label expected calibration error with 15 bins (the kNN row's confidence is its winning vote share, not a probability). API latency is one request over the network and API cost is from measured token usage at list price. Local cost assumes one Azure D4s v6 VM (4 vCPU, 16 GiB, 5th gen Xeon with AMX, the same CPU class these runs used) at the $0.202/hour Linux pay-as-you-go list price in East US 2 (Azure Retail Prices API, 2026-09-28), serving one message at a time with no batching and no idle time.
 
@@ -88,7 +88,8 @@ make demo
 | `src/b77/metrics.py`, `report.py` | Accuracy and macro-F1 with bootstrap CIs, calibration error, latency percentiles, paired McNemar tests through the harness, and this README's results section. |
 | `src/b77/timing.py`, `plan.py`, `estimate.py` | Measured CPU throughput, the hyperparameters in one place, and the time and dollar estimates for the long runs. |
 | `results/runs/` | One gzip-compressed JSONL file per run in the [llm-eval-harness](https://github.com/rkemery/llm-eval-harness) results format (one record per test item, `zcat` it into any `llm-eval` command), plus a `.info.json` saying what produced it. |
-| `notebooks/qwen3_8b_qlora_colab.ipynb` | Qwen3-8B-Base QLoRA for a free Colab T4. **Optional and not run.** No result in this README comes from it. |
+| `scripts/hf_job_qwen3_8b_qlora.py`, `scripts/launch_hf_job.py` | Qwen3-8B-Base QLoRA on one A10G as a Hugging Face Job (a uv script with its own dependencies), and the launcher that starts it with a timeout as the spending cap and fetches the results. |
+| `notebooks/qwen3_8b_qlora_colab.ipynb` | The same 8B recipe for a free Colab T4 (fp16). Not run. The 8B row comes from the Hugging Face Job. |
 
 ## Architecture
 
@@ -163,7 +164,7 @@ This repo does not redo that work. It adds the frontier-API side: two gpt-6 mode
 - **The sweep is small.** Two learning rates, one seed, a 2,000-message subset, chosen by dev accuracy. Epoch counts are fixed in advance rather than tuned, to fit the CPU budget.
 - **No calibration for the API arms** (no logprobs), and API latency includes the network and the provider's queue on the day of the run.
 - **CPU cost is an assumption.** It prices serial batch-1 inference on a comparable VM at list price with no idle time. Batching raises throughput several times, and a GPU changes the picture.
-- **The 8B QLoRA notebook is not run.** It is there for anyone with a Colab T4 and makes no claim.
+- **The 8B row ran on a GPU, the other local rows on a CPU.** Its latency and cost use the A10G and the job's list price, so compare them with the CPU rows as a different deployment, not a like-for-like speed test. It has one seed.
 - **Token and time estimates for the API arms** use the Qwen3 tokenizer as a stand-in for the provider's, so they are rough (about +/- 25%).
 
 ## Cost of a full live run

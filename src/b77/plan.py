@@ -46,7 +46,7 @@ RUN_QWEN_FINAL = "qwen3-0.6b-lora-r16-s{seed}"
 RUN_LUNA_ZERO = "gpt-6-luna-zeroshot"
 RUN_LUNA_FEW = "gpt-6-luna-fewshot-k20"
 RUN_SOL_FEW = "gpt-6-sol-fewshot-k20"
-RUN_QWEN8B = "qwen3-8b-qlora-r16-s0"  # written by the optional Colab notebook
+RUN_QWEN8B = "qwen3-8b-qlora-r16-s0"  # written by scripts/hf_job_qwen3_8b_qlora.py
 
 
 def run_logreg_curve(k: int, seed: int) -> str:

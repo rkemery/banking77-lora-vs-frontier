@@ -93,10 +93,10 @@ def arms() -> list[ArmSpec]:
             "pending live run: `make prompt-sol-fewshot`",
         ),
         ArmSpec(
-            "Qwen3-8B-Base QLoRA r16 (Colab T4)",
+            "Qwen3-8B-Base QLoRA r16 (one A10G, Hugging Face Jobs)",
             (plan.RUN_QWEN8B,),
             "gpu",
-            "not run, optional (`notebooks/qwen3_8b_qlora_colab.ipynb`), no result claimed",
+            "pending GPU run: `scripts/launch_hf_job.py`",
         ),
     ]
 
@@ -109,13 +109,21 @@ def ci(low: float, high: float) -> str:
     return f"{100 * low:.1f} to {100 * high:.1f}"
 
 
-def cost_per_1k(run: Run, kind: str) -> float | None:
+def usd_per_hour(run: Run, kind: str) -> float | None:
+    """The CPU VM price for local runs, the job flavor's price recorded by a GPU run."""
     if kind == "gpu":
-        return None
+        return run.info.get("usd_per_hour")
+    return CPU_USD_PER_HOUR
+
+
+def cost_per_1k(run: Run, kind: str) -> float | None:
     if kind == "api":
         return float(sum(r.cost_usd for r in run.records)) / len(run.records) * 1000
-    mean_ms = float(np.mean(run.latencies()))
-    return CPU_USD_PER_HOUR * mean_ms * 1000 / 3_600_000
+    price = usd_per_hour(run, kind)
+    lat = run.latencies()
+    if price is None or not lat.size:
+        return None
+    return price * float(np.mean(lat)) * 1000 / 3_600_000
 
 
 def fmt_cost(value: float) -> str:
@@ -156,9 +164,10 @@ def arm_metrics(spec: ArmSpec, runs: list[Run], dedup_ids: list[str]) -> dict[st
         out["seed_accuracies"] = accs
         out["seed_sd"] = float(np.std(accs, ddof=1))
     train_seconds = run.info.get("train_seconds")
-    if train_seconds is not None:
+    price = usd_per_hour(run, spec.kind)
+    if train_seconds is not None and price is not None:
         out["train_minutes"] = train_seconds / 60
-        out["train_cost_usd"] = CPU_USD_PER_HOUR * train_seconds / 3600
+        out["train_cost_usd"] = price * train_seconds / 3600
     return out
 
 
@@ -187,7 +196,7 @@ def results_table(rows: list[tuple[ArmSpec, dict[str, Any] | None]], dedup_n: in
         if spec.kind == "local":
             lat += " (CPU, batch 1)"
         if spec.kind == "gpu":
-            lat = "n/a (GPU, batched)"
+            lat += " (A10G GPU, batch 1)"
         cost = "n/a" if m["cost_per_1k_usd"] is None else fmt_cost(m["cost_per_1k_usd"])
         lines.append(
             f"| {spec.label} | {pct(m['accuracy'])} ({ci(*m['accuracy_ci'])}){seeds} "

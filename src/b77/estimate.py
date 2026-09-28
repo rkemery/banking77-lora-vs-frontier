@@ -54,11 +54,11 @@ def estimate_all(train: Split, test: Split, sample: int = 300) -> str:
     prefix = count(INSTRUCTIONS) + count(json.dumps(RESPONSE_FORMAT))
     rows = [
         f"Computed {time.strftime('%Y-%m-%d')} by `make estimate`. Token counts: {how}. "
-        f"Static prefix (instructions + schema): about {prefix} tokens, "
+        f"Static prefix (instructions + schema): about {prefix:,} tokens, "
         + ("enough to be cached." if prefix >= CACHE_MIN_PREFIX else "below the cache minimum."),
         "",
         "| Arm | Tokens in per call | Cost, no cache hits | Cost, prefix cached "
-        "| Worst case per call (DollarCap) | Default cap | Minutes at the TPM limit |",
+        "| Worst case per call (DollarCap) | Default cap | Wall clock at the TPM limit |",
         "|---|---|---|---|---|---|---|",
     ]
     rng = np.random.default_rng(0)
@@ -89,6 +89,6 @@ def estimate_all(train: Split, test: Split, sample: int = 300) -> str:
         rows.append(
             f"| {arm.key} ({arm.model}) | {tokens_in:,.0f} | ${no_cache:.2f} | ${cached:.2f} "
             f"| ${float(np.mean(worst)):.4f} | ${arm.default_cap_usd:.2f} "
-            f"| {n / per_minute:,.0f} at {arm.tokens_per_minute:,} TPM |"
+            f"| {n / per_minute / 60:.1f} h at {arm.tokens_per_minute:,} TPM |"
         )
     return "\n".join(rows)

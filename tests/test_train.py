@@ -8,10 +8,13 @@ import pytest
 torch = pytest.importorskip("torch")
 transformers = pytest.importorskip("transformers")
 pytest.importorskip("peft")
+# Tiny models gain nothing from threads, and extra threads crawl on a busy machine.
+torch.set_num_threads(1)
 
 from b77.train import (  # noqa: E402
     TrainConfig,
     apply_lora,
+    attach_adapter,
     collate,
     length_grouped_batches,
     predict,
@@ -103,3 +106,20 @@ def test_the_loop_learns_a_separable_toy_task() -> None:
     np.testing.assert_allclose(probs.sum(axis=1), 1.0, rtol=1e-5)
     assert latency is not None
     assert latency.shape == (3,)
+
+
+def test_saved_adapter_and_head_reload_to_the_same_predictions(tmp_path) -> None:
+    cfg = TrainConfig(model="qwen3-0.6b", lr=5e-3, epochs=1, batch_size=8, seed=0)
+    tokenizer = TinyTokenizer()
+    texts = ["card never came", "change my pin", "top up failed"] * 8
+    labels = np.array([11, 21, 59] * 8)
+    model, _, _ = train(
+        cfg, texts, labels, model_and_tokenizer=(apply_lora(tiny_qwen(), cfg), tokenizer)
+    )
+    before, _ = predict(model, tokenizer, texts[:3])
+    model.save_pretrained(tmp_path)
+    fresh = tiny_qwen()
+    fresh.config.pad_token_id = 0
+    reloaded = attach_adapter(fresh, tmp_path)
+    after, _ = predict(reloaded, tokenizer, texts[:3])
+    np.testing.assert_allclose(before, after, atol=1e-6)

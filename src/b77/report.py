@@ -179,7 +179,10 @@ def results_table(rows: list[tuple[ArmSpec, dict[str, Any] | None]], dedup_n: in
         seeds = ""
         if "seed_sd" in m:
             seeds = f", seed sd {100 * m['seed_sd']:.1f} pts over {len(m['seed_accuracies'])}"
-        ece = "n/a (no logprobs)" if spec.kind == "api" else f"{m['ece']:.3f}"
+        if spec.kind == "api":
+            ece = "n/a (no logprobs)"
+        else:
+            ece = "n/a" if m["ece"] is None else f"{m['ece']:.3f}"
         lat = f"{m['latency_p50_ms']:.0f} / {m['latency_p95_ms']:.0f} ms"
         if spec.kind == "local":
             lat += " (CPU, batch 1)"
@@ -371,6 +374,15 @@ def timing_lines(timing: dict[str, Any] | None) -> list[str]:
         f"| bge-small encoder | n/a (frozen) | {bge['batch1_p50_ms']:.0f} ms "
         f"| {bge['batch64_examples_per_second']:.0f}/s |",
         "",
+        *(
+            [
+                "Other jobs shared the CPU during this measurement, so an idle machine with 4 "
+                "threads will be faster. `make timing` re-measures.",
+                "",
+            ]
+            if timing["load_average_1m_before"] > 1.5
+            else []
+        ),
         f"Estimated wall-clock for the long targets: `make sweep` {est['sweep']:.0f} min, "
         f"`make train-final` {est['train_final_per_seed']:.0f} min per seed, "
         f"`make train-modernbert` {est['train_modernbert']:.0f} min, "

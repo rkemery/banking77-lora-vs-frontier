@@ -166,8 +166,6 @@ def load_trained(run_dir: Path, model_key: str) -> tuple[Any, Any]:
             run_dir, dtype=torch.bfloat16, attn_implementation=spec.attn_implementation
         )
         return model.eval(), tokenizer
-    from peft import PeftModel
-
     base = AutoModelForSequenceClassification.from_pretrained(
         spec.hf_id,
         revision=spec.revision,
@@ -176,10 +174,19 @@ def load_trained(run_dir: Path, model_key: str) -> tuple[Any, Any]:
         attn_implementation=spec.attn_implementation,
     )
     base.config.pad_token_id = tokenizer.pad_token_id
-    # Inference runs under bf16 autocast, which rounds every matmul input to bf16 whether
-    # the stored weight is fp32 or bf16, so the adapter dtype after loading does not matter.
-    model = PeftModel.from_pretrained(base, run_dir)
-    return model.eval(), tokenizer
+    return attach_adapter(base, run_dir), tokenizer
+
+
+def attach_adapter(base: Any, run_dir: Path) -> Any:
+    """Put a saved LoRA adapter and its classification head back on a fresh base model.
+
+    Inference runs under bf16 autocast, which rounds every matmul input to bf16
+    whether the stored weight is fp32 or bf16, so the adapter dtype after
+    loading does not change the predictions.
+    """
+    from peft import PeftModel
+
+    return PeftModel.from_pretrained(base, run_dir).eval()
 
 
 def save_model(model: Any, tokenizer: Any, out_dir: Path) -> None:

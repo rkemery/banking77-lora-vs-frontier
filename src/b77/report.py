@@ -32,10 +32,12 @@ SMOKE_DIR = Path("results/smoke")
 # East US 2, from the Azure Retail Prices API on 2026-09-28.
 CPU_USD_PER_HOUR = 0.202
 CPU_PRICE_NOTE = (
-    "Local cost assumes one Azure D4s v6 VM (4 vCPU, 16 GiB, 5th gen Xeon with AMX, "
+    "Local CPU cost assumes one Azure D4s v6 VM (4 vCPU, 16 GiB, 5th gen Xeon with AMX, "
     "the same CPU class these runs used) at the $0.202/hour Linux pay-as-you-go list price "
     "in East US 2 (Azure Retail Prices API, 2026-09-28), serving one message at a time "
-    "with no batching and no idle time."
+    "with no batching and no idle time. The GPU row uses the Hugging Face Jobs a10g-large "
+    "list price its run recorded ($1.50/hour, huggingface.co/docs/hub/jobs-pricing, "
+    "2026-09-28) on the same one-message-at-a-time basis."
 )
 
 

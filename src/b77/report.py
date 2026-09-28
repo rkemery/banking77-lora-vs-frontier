@@ -277,6 +277,26 @@ def curve_table(runs_dir: Path, full: dict[str, dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
+def conditions_line(runs: dict[str, Run]) -> list[str]:
+    """How busy the CPU was when each local run's latency was measured."""
+    parts = []
+    for run_id, run in runs.items():
+        hw = run.info.get("hardware")
+        if not hw:
+            continue
+        embed = hw.get("embedding_latency_measured_with") or {}
+        threads = embed.get("torch_threads", hw.get("torch_threads"))
+        load = embed.get("load_average_1m", hw.get("load_average_1m"))
+        parts.append(f"`{run_id}` with {threads} torch thread(s) at load {load}")
+    if not parts:
+        return []
+    return [
+        "Local latency depends on how busy the machine was (load 4 means all 4 cores busy): "
+        + ", ".join(parts)
+        + "."
+    ]
+
+
 def spend_lines(full: dict[str, dict[str, Any]]) -> list[str]:
     """One-off costs: training time for local runs, total spend for API runs."""
     lines = []
@@ -342,10 +362,11 @@ def smoke_lines(smoke_dir: Path = SMOKE_DIR) -> list[str]:
     for path in sorted(smoke_dir.glob("*.json")):
         s = json.loads(path.read_text(encoding="utf-8"))
         out.append(
-            f"- Smoke run `{path.stem}`: {s['steps']} steps on {s['train_size']:,} examples, "
-            f"dev accuracy {pct(s['dev_accuracy'])} (n={s['dev_size']:,}), "
-            f"{s['examples_per_second']:.1f} training examples/s. Not a result, a check that "
-            "training learns."
+            f"- Smoke run `{path.stem}`: {s['steps']} steps ({s['examples_seen']:,} examples "
+            f"from train minus dev), dev accuracy {pct(s['dev_accuracy'])} "
+            f"(n={s['dev_size']:,}), {s['examples_per_second']:.1f} training examples/s on "
+            f"{s['hardware']['torch_threads']} threads at load {s['hardware']['load_average_1m']}. "
+            "A check that training learns, not a result."
         )
     return out
 
@@ -423,6 +444,8 @@ def build(runs_dir: Path = RUNS_DIR) -> tuple[str, dict[str, Any]]:
         "expected calibration error with 15 bins (the kNN row's confidence is its winning "
         "vote share, not a probability). API latency is one request over the network "
         "and API cost is from measured token usage at list price. " + CPU_PRICE_NOTE,
+        "",
+        *conditions_line(all_runs),
         "",
         *spend_lines(full),
         *framing_lines(full),

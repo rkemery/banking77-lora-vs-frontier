@@ -11,6 +11,8 @@ also holds a real per-item latency for the logistic-regression and kNN rows.
 
 from __future__ import annotations
 
+import json
+import os
 import time
 from pathlib import Path
 
@@ -76,10 +78,25 @@ def cached_embeddings(
     if timed:
         emb, latency = encoder.encode_timed(split.texts)
         np.save(lat_path, latency)
+        conditions = {
+            "torch_threads": encoder._torch.get_num_threads(),
+            "load_average_1m": round(os.getloadavg()[0], 2),
+        }
+        timing_conditions_path(embed_dir, split.name).write_text(json.dumps(conditions))
     else:
         emb = encoder.encode_batched(split.texts)
     np.save(path, emb)
     return emb, latency
+
+
+def timing_conditions_path(embed_dir: Path, split_name: str) -> Path:
+    return embed_dir / f"bge-small-{split_name}-latency-conditions.json"
+
+
+def timing_conditions(split_name: str, embed_dir: Path = EMBED_DIR) -> dict[str, float]:
+    """Threads and load average when the per-item embedding latency was measured."""
+    path = timing_conditions_path(embed_dir, split_name)
+    return json.loads(path.read_text()) if path.exists() else {}
 
 
 def top_k(queries: np.ndarray, keys: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:

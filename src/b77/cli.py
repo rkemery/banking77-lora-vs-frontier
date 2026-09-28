@@ -120,7 +120,7 @@ def _hardware_info() -> dict[str, Any]:
 
 def cmd_baselines(args: argparse.Namespace) -> int:
     from b77.baselines import knn_vote, logreg_run
-    from b77.embed import cached_embeddings
+    from b77.embed import cached_embeddings, timing_conditions
     from b77.prompting import Neighbors
 
     train, test, splits = load_all()
@@ -130,7 +130,7 @@ def cmd_baselines(args: argparse.Namespace) -> int:
     position = {item_id: i for i, item_id in enumerate(train.ids)}
     dev_idx = np.array([position[i] for i in splits["dev"]["ids"]])
     fit_idx = np.setdiff1d(np.arange(len(train)), dev_idx)
-    hw = _hardware_info()
+    hw = {**_hardware_info(), "embedding_latency_measured_with": timing_conditions("test")}
 
     def logreg(run_id: str, train_idx: np.ndarray, fit_part: np.ndarray, note: str) -> None:
         res = logreg_run(
@@ -473,7 +473,11 @@ def cmd_prompt(args: argparse.Namespace) -> int:
     train, test, _ = load_all()
     if args.limit:
         test = test.subset(np.arange(args.limit))
-    client, cap = build_client(args, arm)
+    try:
+        client, cap = build_client(args, arm)
+    except ValueError as exc:  # missing AZURE_OPENAI_BASE_URL and similar configuration errors
+        log(f"cannot start a live run: {exc}")
+        return 2
     item_errors: tuple[type[Exception], ...] = ()
     if args.live:
         import openai
@@ -497,7 +501,7 @@ def cmd_prompt(args: argparse.Namespace) -> int:
         log(f"stopped: {exc}. Completed calls are cached, so a rerun with a higher --cap resumes.")
         return 2
     except CacheMiss as exc:
-        log(f"stopped: {exc}. Pass --live to call the model.")
+        log(f"stopped: {exc} Pass --live to call the model.")
         return 2
     run_id = arm.run_id if not args.limit else f"{arm.run_id}-first{args.limit}"
     runs_dir = FAKE_RUNS_DIR if args.fake else RUNS_DIR

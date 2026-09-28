@@ -1,0 +1,68 @@
+{
+  "arms": {
+    "logreg-bge-small": {
+      "run_id": "logreg-bge-small",
+      "n": 3080,
+      "accuracy": 0.9340909090909091,
+      "accuracy_ci": [
+        0.925,
+        0.9425324675324676
+      ],
+      "macro_f1": 0.9339559466218784,
+      "macro_f1_ci": [
+        0.9241372802942476,
+        0.9418255395422193
+      ],
+      "dedup_n": 2662,
+      "dedup_accuracy": 0.9256198347107438,
+      "dedup_accuracy_ci": [
+        0.9154770848985725,
+        0.9353869271224643
+      ],
+      "ece": 0.10351525649350637,
+      "errors": 0,
+      "invalid": 0,
+      "cost_per_1k_usd": 0.0010231043856421358,
+      "total_cost_usd": 0.0,
+      "latency_p50_ms": 17.417,
+      "latency_p95_ms": 25.6042,
+      "train_minutes": 0.035337439583327065,
+      "train_cost_usd": 0.00011896937993053448
+    },
+    "knn-bge-small-k20": {
+      "run_id": "knn-bge-small-k20",
+      "n": 3080,
+      "accuracy": 0.9224025974025974,
+      "accuracy_ci": [
+        0.912987012987013,
+        0.9318181818181818
+      ],
+      "macro_f1": 0.9223047388710495,
+      "macro_f1_ci": [
+        0.9119589584696306,
+        0.9306656354370686
+      ],
+      "dedup_n": 2662,
+      "dedup_accuracy": 0.9132231404958677,
+      "dedup_accuracy_ci": [
+        0.9023290758827949,
+        0.9237415477084898
+      ],
+      "ece": 0.03949448701298699,
+      "errors": 0,
+      "invalid": 0,
+      "cost_per_1k_usd": 0.0010867529496753248,
+      "total_cost_usd": 0.0,
+      "latency_p50_ms": 18.554499999999997,
+      "latency_p95_ms": 26.746
+    }
+  },
+  "dedup": {
+    "method": "Nearest train item by cosine similarity of character 3-5 gram TF-IDF vectors (scikit-learn TfidfVectorizer, analyzer='char_wb', lowercase, fit on train and test). A test item is removed when its nearest train item has similarity >= 0.90 and the same label.",
+    "threshold": 0.9,
+    "near_twins": 440,
+    "same_label_twins": 418,
+    "different_label_twins": 22,
+    "kept": 2662
+  }
+}

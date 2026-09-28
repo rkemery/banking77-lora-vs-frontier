@@ -1,0 +1,82 @@
+{
+  "model": "Qwen/Qwen3-0.6B-Base",
+  "revision": "da87bfb608c14b7cf20ba1ce41287e8de496c0cd",
+  "config": {
+    "model": "qwen3-0.6b",
+    "lr": 0.0002,
+    "epochs": 1,
+    "batch_size": 16,
+    "warmup_ratio": 0.06,
+    "weight_decay": 0.0,
+    "lora_r": 16,
+    "lora_alpha": 32,
+    "lora_dropout": 0.0,
+    "max_length": 128,
+    "seed": 0,
+    "grad_clip": 1.0,
+    "max_steps": 200,
+    "eval_batch_size": 64
+  },
+  "steps": 200,
+  "train_size": 9003,
+  "examples_seen": 3195,
+  "train_seconds": 890.4,
+  "examples_per_second": 3.59,
+  "dev_size": 1000,
+  "dev_accuracy": 0.819,
+  "history": [
+    {
+      "step": 25,
+      "epoch": 1,
+      "loss": 5.1968473625183105
+    },
+    {
+      "step": 50,
+      "epoch": 1,
+      "loss": 4.20935302734375
+    },
+    {
+      "step": 75,
+      "epoch": 1,
+      "loss": 2.8776485109329224
+    },
+    {
+      "step": 100,
+      "epoch": 1,
+      "loss": 1.6543649649620056
+    },
+    {
+      "step": 125,
+      "epoch": 1,
+      "loss": 1.1005723142623902
+    },
+    {
+      "step": 150,
+      "epoch": 1,
+      "loss": 0.9539280724525452
+    },
+    {
+      "step": 175,
+      "epoch": 1,
+      "loss": 0.7332359755039215
+    },
+    {
+      "step": 200,
+      "epoch": 1,
+      "loss": 0.718998019695282
+    },
+    {
+      "step": 200,
+      "epoch": 1,
+      "dev_accuracy": 0.819
+    }
+  ],
+  "hardware": {
+    "cpu": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+    "logical_cpus": 4,
+    "torch_threads": 2,
+    "torch": "2.14.0+cpu",
+    "python": "3.11.15",
+    "load_average_1m": 7.18
+  }
+}

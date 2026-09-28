@@ -1,0 +1,56 @@
+{
+  "measured_at": "2026-09-28T20:14:15",
+  "load_average_1m_before": 5.8,
+  "cpu": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+  "logical_cpus": 4,
+  "torch_threads": 2,
+  "torch": "2.14.0+cpu",
+  "python": "3.11.15",
+  "qwen3-0.6b": {
+    "train": {
+      "batch_size": 16,
+      "steps": 20,
+      "examples": 320,
+      "seconds": 76.51,
+      "examples_per_second": 4.18
+    },
+    "inference": {
+      "batch1_p50_ms": 326.11,
+      "batch1_mean_ms": 333.31,
+      "batch64_examples_per_second": 10.84
+    },
+    "inference_merged": {
+      "batch1_p50_ms": 225.05,
+      "batch1_mean_ms": 237.5,
+      "batch64_examples_per_second": 16.22
+    }
+  },
+  "modernbert-base": {
+    "train": {
+      "batch_size": 32,
+      "steps": 20,
+      "examples": 640,
+      "seconds": 55.23,
+      "examples_per_second": 11.59
+    },
+    "inference": {
+      "batch1_p50_ms": 81.6,
+      "batch1_mean_ms": 93.27,
+      "batch64_examples_per_second": 46.74
+    }
+  },
+  "bge-small": {
+    "inference": {
+      "batch1_p50_ms": 19.24,
+      "batch1_mean_ms": 25.29,
+      "batch64_examples_per_second": 81.22
+    }
+  },
+  "load_average_1m_after": 7.02,
+  "estimates_minutes": {
+    "sweep": 39.0,
+    "train_final_per_seed": 97.4,
+    "train_modernbert": 48.4,
+    "learning_curve_lora": 123.2
+  }
+}

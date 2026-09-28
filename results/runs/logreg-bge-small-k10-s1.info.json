@@ -1,0 +1,30 @@
+{
+  "run_id": "logreg-bge-small-k10-s1",
+  "config": "logreg",
+  "model": "BAAI/bge-small-en-v1.5",
+  "arm": "logistic regression on frozen bge-small embeddings",
+  "train_size": 770,
+  "c": 100.0,
+  "dev_accuracy_by_c": {
+    "0.1": 0.783,
+    "1.0": 0.827,
+    "10.0": 0.873,
+    "100.0": 0.874,
+    "1000.0": 0.856
+  },
+  "train_seconds": 0.15634061399941857,
+  "latency": "bge-small embedding of one message plus predict_proba, batch 1",
+  "note": "learning curve, 10 per class, draw 1. C chosen on dev with this subset.",
+  "hardware": {
+    "cpu": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+    "logical_cpus": 4,
+    "torch_threads": 1,
+    "torch": "2.14.0+cpu",
+    "python": "3.11.15",
+    "load_average_1m": 6.93,
+    "embedding_latency_measured_with": {
+      "torch_threads": 1,
+      "load_average_1m": 6.91
+    }
+  }
+}

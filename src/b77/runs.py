@@ -2,8 +2,10 @@
 
 Each run is two files in `results/runs/`:
 
-- `<run_id>.jsonl`: one `EvalRecord` per test item, `scores = {"correct": bool}`,
+- `<run_id>.jsonl.gz`: one `EvalRecord` per test item, `scores = {"correct": bool}`,
   with the gold and predicted label ids and the top-label probability in `meta`.
+  Plain harness JSONL, gzip-compressed (25x smaller, and 3,080 records per run
+  add up). `zcat` it into any `llm-eval` command.
 - `<run_id>.info.json`: what produced the run (arm, model, hyperparameters,
   training time, hardware, cost assumptions). The report reads both.
 
@@ -13,13 +15,15 @@ here count it as a wrong answer, so errors can only lower accuracy.
 
 from __future__ import annotations
 
+import gzip
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 import numpy as np
-from llm_eval_harness import EvalRecord, read_records, write_records
+from llm_eval_harness import EvalRecord, RecordError
+from llm_eval_harness.records import check_unique, validate_record
 
 RUNS_DIR = Path("results/runs")
 NO_PREDICTION = -1
@@ -73,8 +77,8 @@ def write_run(
     info: dict[str, Any],
     runs_dir: Path = RUNS_DIR,
 ) -> Path:
-    path = runs_dir / f"{run_id}.jsonl"
-    write_records(path, to_records(run_id, config, model, preds))
+    path = run_path(run_id, runs_dir)
+    write_records_gz(path, to_records(run_id, config, model, preds))
     info_path = runs_dir / f"{run_id}.info.json"
     info_path.write_text(
         json.dumps({"run_id": run_id, "config": config, "model": model, **info}, indent=2) + "\n",
@@ -122,12 +126,48 @@ class Run:
         return sum(r.error is not None for r in self.records)
 
 
+def run_path(run_id: str, runs_dir: Path = RUNS_DIR) -> Path:
+    return runs_dir / f"{run_id}.jsonl.gz"
+
+
+def write_records_gz(path: Path, records: list[EvalRecord]) -> None:
+    """Validate every record, then write gzip-compressed JSONL with a fixed header.
+
+    mtime=0 keeps the bytes identical when the same records are written again,
+    so rerunning a step does not show up as a change in git.
+    """
+    for record in records:
+        validate_record(record)
+    check_unique(records, source=str(path))
+    text = "".join(
+        json.dumps(r.to_dict(), ensure_ascii=False, allow_nan=False) + "\n" for r in records
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("wb") as raw, gzip.GzipFile(fileobj=raw, mode="wb", mtime=0) as gz:
+        gz.write(text.encode("utf-8"))
+
+
+def read_records_gz(path: Path) -> list[EvalRecord]:
+    """Read and validate every record, with the file and line number on any error."""
+    records = []
+    with gzip.open(path, "rt", encoding="utf-8") as fh:
+        for lineno, line in enumerate(fh, start=1):
+            if not line.strip():
+                continue
+            try:
+                records.append(EvalRecord.from_dict(json.loads(line)))
+            except (json.JSONDecodeError, RecordError) as exc:
+                raise RecordError(f"{path}:{lineno}: {exc}") from exc
+    check_unique(records, source=str(path))
+    return records
+
+
 def load_run(run_id: str, runs_dir: Path = RUNS_DIR) -> Run:
-    records = read_records(runs_dir / f"{run_id}.jsonl")
+    records = read_records_gz(run_path(run_id, runs_dir))
     info_path = runs_dir / f"{run_id}.info.json"
     info = json.loads(info_path.read_text(encoding="utf-8")) if info_path.exists() else {}
     return Run(run_id=run_id, info=info, records=records)
 
 
 def run_exists(run_id: str, runs_dir: Path = RUNS_DIR) -> bool:
-    return (runs_dir / f"{run_id}.jsonl").exists()
+    return run_path(run_id, runs_dir).exists()

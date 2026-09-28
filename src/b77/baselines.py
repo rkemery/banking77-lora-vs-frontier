@@ -17,7 +17,7 @@ from sklearn.linear_model import LogisticRegression
 
 from b77.data import N_CLASSES
 
-C_GRID: tuple[float, ...] = (0.1, 1.0, 10.0, 100.0)
+C_GRID: tuple[float, ...] = (0.1, 1.0, 10.0, 100.0, 1000.0)
 
 
 @dataclass(frozen=True)

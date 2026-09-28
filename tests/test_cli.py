@@ -14,7 +14,7 @@ def test_every_subcommand_parses_and_has_a_handler() -> None:
         ["baselines"],
         ["timing", "--steps", "5"],
         ["smoke", "--model", "qwen3-0.6b"],
-        ["sweep"],
+        ["sweep", "--dry-run"],
         ["train-final", "--seed", "1"],
         ["train-modernbert"],
         ["learning-curve", "--k", "5", "10"],

@@ -1,4 +1,4 @@
-.PHONY: install lint format test demo data splits embed baselines timing smoke sweep \
+.PHONY: install lint format test demo data splits embed baselines timing smoke dry-runs sweep \
 	train-final train-modernbert learning-curve estimate notebook \
 	prompt-luna-zeroshot prompt-luna-fewshot prompt-sol-fewshot
 
@@ -45,6 +45,13 @@ timing: data
 smoke: data
 	uv run b77 smoke --model qwen3-0.6b --steps 200
 	uv run b77 smoke --model modernbert-base --steps 200
+
+# Every long target for 3 steps on a few items, under artifacts/dry-runs/. A few minutes.
+dry-runs: data
+	uv run b77 sweep --dry-run
+	uv run b77 train-final --dry-run
+	uv run b77 train-modernbert --dry-run
+	uv run b77 learning-curve --k 5 --dry-run
 
 # ---- long CPU runs (see results/timing.json for the measured estimates) ---------
 # Qwen3-0.6B LoRA at lr 1e-4 and 3e-4 on the 2,000-example subset, scored on dev.

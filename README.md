@@ -200,6 +200,7 @@ make data splits          # download and hash-check Banking77, rebuild the froze
 make embed baselines      # bge-small embeddings, logistic regression, kNN, logreg learning curve
 make timing               # measure this CPU, write results/timing.json and the time estimates
 make smoke                # short LoRA and ModernBERT runs scored on dev
+make dry-runs             # every long target for 3 steps on a few items, a few minutes
 make sweep                # LoRA learning-rate sweep on dev
 make train-final          # LoRA on all of train with the sweep's learning rate, scored on test
 make train-modernbert     # ModernBERT-base on all of train, scored on test

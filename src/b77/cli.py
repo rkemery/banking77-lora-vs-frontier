@@ -21,6 +21,9 @@ TWINS_PATH = Path("data/splits/test_near_twins.jsonl")
 SMOKE_DIR = Path("results/smoke")
 SWEEP_PATH = Path("results/sweep.json")
 FAKE_RUNS_DIR = Path("artifacts/fake-runs")
+# --dry-run: a few steps and a few items, written under artifacts/, to check a code path fast.
+DRY_DIR = Path("artifacts/dry-runs")
+DRY_STEPS, DRY_TEST_ITEMS, DRY_DEV_ITEMS = 3, 20, 50
 
 
 def log(message: str) -> None:
@@ -225,7 +228,9 @@ def _time_search(queries: np.ndarray, keys: np.ndarray, n: int = 200) -> float:
 # ---------------------------------------------------------------- training
 
 
-def _train_cfg(model: str, lr: float, epochs: float, seed: int, max_steps: int | None = None):
+def _train_cfg(
+    model: str, lr: float, epochs: float, seed: int, max_steps: int | None = None
+) -> Any:
     from b77.train import TrainConfig
 
     return TrainConfig(
@@ -285,9 +290,15 @@ def cmd_sweep(args: argparse.Namespace) -> int:
     train_split, _, splits = load_all()
     sub = select(train_split, splits["sweep"]["ids"], "sweep")
     dev = select(train_split, splits["dev"]["ids"], "dev")
+    out_path = SWEEP_PATH
+    if args.dry_run:
+        dev = dev.subset(np.arange(DRY_DEV_ITEMS))
+        out_path = DRY_DIR / "sweep.json"
     runs = []
     for lr in plan.SWEEP_LRS:
-        cfg = _train_cfg(plan.QWEN, lr, plan.SWEEP_EPOCHS, seed=0)
+        cfg = _train_cfg(
+            plan.QWEN, lr, plan.SWEEP_EPOCHS, seed=0, max_steps=DRY_STEPS if args.dry_run else None
+        )
         _, _, result = train(cfg, sub.texts, sub.labels, dev=(dev.texts, dev.labels))
         accs = [h["dev_accuracy"] for h in result.history if "dev_accuracy" in h]
         runs.append(
@@ -312,12 +323,15 @@ def cmd_sweep(args: argparse.Namespace) -> int:
         "runs": runs,
         "hardware": _hardware_info(),
     }
-    SWEEP_PATH.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    print(f"chosen lr {best['lr']:g} -> {SWEEP_PATH}")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    print(f"chosen lr {best['lr']:g} -> {out_path}")
     return 0
 
 
-def chosen_lr() -> float:
+def chosen_lr(dry_run: bool = False) -> float:
+    if dry_run and not SWEEP_PATH.exists():
+        return plan.DEFAULT_LR[plan.QWEN]
     if not SWEEP_PATH.exists():
         raise FileNotFoundError(f"{SWEEP_PATH} not found. Run `make sweep` first or pass --lr.")
     return float(json.loads(SWEEP_PATH.read_text(encoding="utf-8"))["chosen_lr"])
@@ -334,17 +348,20 @@ def _fit_and_score(
     note: str,
     test_batch_size: int,
     save: bool,
+    dry_run: bool = False,
 ) -> None:
     from b77.train import ARTIFACTS, iter_progress, predict, save_model, train
 
-    cfg = _train_cfg(model, lr, epochs, seed)
+    runs_dir, model_dir = RUNS_DIR, ARTIFACTS / run_id
+    if dry_run:
+        test = test.subset(np.arange(DRY_TEST_ITEMS))
+        runs_dir, model_dir = DRY_DIR, DRY_DIR / "models" / run_id
+    cfg = _train_cfg(model, lr, epochs, seed, max_steps=DRY_STEPS if dry_run else None)
     fitted, tokenizer, result = train(cfg, train_set.texts, train_set.labels, dev=None)
     if save:
-        save_model(fitted, tokenizer, ARTIFACTS / run_id)
-    if cfg.spec.method == "full":
-        import torch
-
-        fitted = fitted.to(dtype=torch.bfloat16)
+        save_model(fitted, tokenizer, model_dir)
+    # Predict with the weights as trained, under the same bf16 autocast as training. Casting a
+    # full model with .to(bfloat16) would also round buffers such as the rotary frequencies.
     probs, latency = predict(
         fitted,
         tokenizer,
@@ -378,17 +395,17 @@ def _fit_and_score(
         "latency": "tokenise, forward pass and softmax for one message, batch 1, bf16 autocast"
         if latency is not None
         else "not measured (batched evaluation)",
-        "adapter_dir": str(ARTIFACTS / run_id) if save else None,
+        "adapter_dir": str(model_dir) if save else None,
         "hardware": _hardware_info(),
     }
-    write_run(run_id, f"{model}-{cfg.spec.method}", cfg.spec.hf_id, preds, info)
+    write_run(run_id, f"{model}-{cfg.spec.method}", cfg.spec.hf_id, preds, info, runs_dir)
     acc = float(np.mean(probs.argmax(axis=1) == test.labels))
     print(f"{run_id}: test accuracy {acc:.4f}, trained {result.train_seconds / 60:.1f} min")
 
 
 def cmd_train_final(args: argparse.Namespace) -> int:
     train_split, test, _ = load_all()
-    lr = args.lr if args.lr is not None else chosen_lr()
+    lr = args.lr if args.lr is not None else chosen_lr(args.dry_run)
     _fit_and_score(
         plan.QWEN,
         lr,
@@ -401,6 +418,7 @@ def cmd_train_final(args: argparse.Namespace) -> int:
         f"lr {lr:g} from the dev sweep, all of train",
         test_batch_size=1,
         save=True,
+        dry_run=args.dry_run,
     )
     return 0
 
@@ -418,13 +436,14 @@ def cmd_train_modernbert(args: argparse.Namespace) -> int:
         "ModernBERT-base full fine-tune, lr 5e-5, all of train",
         test_batch_size=1,
         save=True,
+        dry_run=args.dry_run,
     )
     return 0
 
 
 def cmd_learning_curve(args: argparse.Namespace) -> int:
     train_split, test, splits = load_all()
-    lr = args.lr if args.lr is not None else chosen_lr()
+    lr = args.lr if args.lr is not None else chosen_lr(args.dry_run)
     subsets = splits["learning_curve"]["subsets"][f"seed{args.draw}"]
     for k in args.k:
         sub = select(train_split, subsets[str(k)], f"curve-k{k}")
@@ -439,6 +458,7 @@ def cmd_learning_curve(args: argparse.Namespace) -> int:
             f"Qwen3-0.6B-Base LoRA r16, {k} examples per class (draw {args.draw}), lr {lr:g}",
             test_batch_size=64,
             save=False,
+            dry_run=args.dry_run,
         )
     return 0
 
@@ -564,16 +584,21 @@ def parser() -> argparse.ArgumentParser:
     s = sub.add_parser("smoke", help="short training run scored on dev")
     s.add_argument("--model", choices=list(plan.BATCH_SIZE), required=True)
     s.add_argument("--steps", type=int, default=300)
-    sub.add_parser("sweep", help="LoRA learning-rate sweep on the stratified subset")
+    dry = "3 steps and a handful of items, written under artifacts/dry-runs/, to check the path"
+    s = sub.add_parser("sweep", help="LoRA learning-rate sweep on the stratified subset")
+    s.add_argument("--dry-run", action="store_true", help=dry)
     s = sub.add_parser("train-final", help="Qwen3-0.6B LoRA on all of train, scored on test")
     s.add_argument("--seed", type=int, default=0)
     s.add_argument("--lr", type=float, default=None, help="default: the sweep's choice")
+    s.add_argument("--dry-run", action="store_true", help=dry)
     s = sub.add_parser("train-modernbert", help="ModernBERT-base on all of train, scored on test")
     s.add_argument("--seed", type=int, default=0)
+    s.add_argument("--dry-run", action="store_true", help=dry)
     s = sub.add_parser("learning-curve", help="Qwen3-0.6B LoRA on k examples per class")
     s.add_argument("--k", type=int, nargs="+", default=[5, 10, 20])
     s.add_argument("--draw", type=int, default=0)
     s.add_argument("--lr", type=float, default=None)
+    s.add_argument("--dry-run", action="store_true", help=dry)
     s = sub.add_parser("prompt", help="run one prompting arm on the test set")
     s.add_argument("--arm", required=True, choices=["luna-zeroshot", "luna-fewshot", "sol-fewshot"])
     mode = s.add_mutually_exclusive_group()

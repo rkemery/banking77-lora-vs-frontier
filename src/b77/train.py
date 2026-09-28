@@ -162,8 +162,9 @@ def load_trained(run_dir: Path, model_key: str) -> tuple[Any, Any]:
     spec = MODELS[model_key]
     tokenizer = load_tokenizer(spec)
     if spec.method == "full":
+        # fp32 weights as trained. `predict` runs matmuls in bf16 through autocast.
         model = AutoModelForSequenceClassification.from_pretrained(
-            run_dir, dtype=torch.bfloat16, attn_implementation=spec.attn_implementation
+            run_dir, dtype=torch.float32, attn_implementation=spec.attn_implementation
         )
         return model.eval(), tokenizer
     base = AutoModelForSequenceClassification.from_pretrained(

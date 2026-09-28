@@ -117,8 +117,6 @@ def measure(
         cfg = TrainConfig(model=key, lr=plan.DEFAULT_LR[key], epochs=1)
         tokenizer = load_tokenizer(cfg.spec)
         model = build_model(cfg, tokenizer).eval()
-        if cfg.spec.method == "full":
-            model = model.to(dtype=__import__("torch").bfloat16)
         entry["inference"] = time_inference(model, tokenizer, test_texts)
         if cfg.spec.method == "lora":
             merged = model.merge_and_unload()

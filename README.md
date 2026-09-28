@@ -151,6 +151,7 @@ This repo does not redo that work. It adds the frontier-API side: two gpt-6 mode
 - **sdpa attention for ModernBERT on CPU.** Eager attention trained 14.7 examples/s against 11.6 for sdpa at batch 32 in the exploratory timing, so the ModernBERT run uses eager.
 - **An fp32 base under autocast for the LoRA model.** It trained about 9% slower than keeping the frozen base in bf16 and took twice the memory.
 - **A C grid that stopped at 100.** Two logistic-regression fits on the learning curve picked C = 100, the edge of the first grid, so the grid now reaches 1,000. One fit then picked 1,000, and the full-data fit still picks 10.
+- **Casting the fine-tuned ModernBERT to bf16 for inference.** `.to(torch.bfloat16)` also rounds buffers, and a dry run showed the cast model and the same checkpoint reloaded from disk disagreeing on predictions. Full fine-tunes now predict with their fp32 weights under the same bf16 autocast as training, and a reloaded checkpoint matches to within 5e-6 in probability.
 - **ModernBERT's `reference_compile` flag.** transformers 5 removed it, so the first load failed. The model runs uncompiled.
 - **Timing on a shared machine.** Other jobs shared the same 4 cores during the timing run, and oversubscribed CPU threads slow PyTorch far more than the load alone suggests. `results/timing.json` records the load average before and after, and estimates made under load are pessimistic for an idle machine.
 

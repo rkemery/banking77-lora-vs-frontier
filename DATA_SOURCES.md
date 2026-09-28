@@ -8,7 +8,7 @@ upstream repository's LICENSE file.
 
 | Name | Revision | License | URL |
 |---|---|---|---|
-| `legacy-datasets/banking77` (parquet mirror of PolyAI's Banking77) | `f54121560de48f2852f90be299010d1d6dc612ec` | CC-BY-4.0 (HF card and tag; upstream `PolyAI-LDN/task-specific-datasets` LICENSE is "Attribution 4.0 International") | https://huggingface.co/datasets/legacy-datasets/banking77 |
+| `legacy-datasets/banking77` (parquet mirror of PolyAI's Banking77) | `f54121560de48f2852f90be299010d1d6dc612ec` | CC-BY-4.0 (HF card and tag. The upstream `PolyAI-LDN/task-specific-datasets` LICENSE is "Attribution 4.0 International".) | https://huggingface.co/datasets/legacy-datasets/banking77 |
 
 Files and sha256, checked on every load by `b77 data`:
 

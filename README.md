@@ -53,17 +53,17 @@ LoRA learning-rate sweep: pending CPU run (`make sweep`).
 - Smoke run `modernbert-base`: 200 steps (6,379 examples from train minus dev), dev accuracy 85.4% (n=1,000), 11.7 training examples/s on 2 threads at load 8.06. A check that training learns, not a result.
 - Smoke run `qwen3-0.6b`: 200 steps (3,195 examples from train minus dev), dev accuracy 81.9% (n=1,000), 3.6 training examples/s on 2 threads at load 7.18. A check that training learns, not a result.
 
-Measured on Intel(R) Xeon(R) Processor @ 2.10GHz (2 threads, torch 2.14.0+cpu), load average 5.8 before and 7.02 after (4 is a fully busy machine):
+Measured on Intel(R) Xeon(R) Processor @ 2.10GHz (4 threads, torch 2.14.0+cpu), load average 3.38 before and 4.1 after (4 is a fully busy machine):
 
 | Model | Training examples/s | Inference, batch 1 (p50) | Inference, batch 64 |
 |---|---|---|---|
-| Qwen3-0.6B-Base + LoRA (bs 16) | 4.2 | 326 ms unmerged, 225 ms merged | 11/s |
-| ModernBERT-base (bs 32) | 11.6 | 82 ms | 47/s |
-| bge-small encoder | n/a (frozen) | 19 ms | 81/s |
+| Qwen3-0.6B-Base + LoRA (bs 16) | 3.6 | 117 ms unmerged, 77 ms merged | 40/s |
+| ModernBERT-base (bs 32) | 32.9 | 62 ms | 120/s |
+| bge-small encoder | n/a (frozen) | 9 ms | 265/s |
 
 Other jobs shared the CPU during this measurement, so an idle machine with 4 threads will be faster. `make timing` re-measures.
 
-Estimated wall-clock for the long targets: `make sweep` 39 min, `make train-final` 97 min per seed, `make train-modernbert` 48 min, `make learning-curve` 123 min.
+Estimated wall-clock for the long targets: `make sweep` 40 min, `make train-final` 118 min per seed, `make train-modernbert` 19 min, `make learning-curve` 131 min.
 <!-- results:end -->
 
 ## Quickstart

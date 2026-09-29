@@ -558,17 +558,16 @@ def headline(summary: dict[str, Any]) -> str:
             f"{pct(s6['baseline_accuracy'])} on {s6['n']:,} test messages, McNemar "
             f"p={_fmt_p(s6['p'])}, Holm-adjusted {_fmt_p(s6['holm_p'])}), at about "
             f"{arms_[sol]['cost_per_1k_usd'] / arms_[lf]['cost_per_1k_usd']:.0f}x luna's cost. "
-            f"Luna few-shot "
-            f"(p={_fmt_p(lf6['p'])}) and the Qwen3-8B QLoRA (p={_fmt_p(q86['p'])}, "
-            f"{_fmt_p(q86['holm_p_secondary'])} after Holm over the secondary pairs) can't be "
-            f"separated from the 0.6B.",
+            f"Luna few-shot (p={_fmt_p(lf6['p'])}) and the 8B QLoRA "
+            f"(Holm p={_fmt_p(q86['holm_p_secondary'])}) aren't significantly better than "
+            f"the 0.6B.",
             f"- **Logistic regression on frozen bge-small embeddings** is **at most "
             f"{at_most((lr, Q06))} points below** the 0.6B LoRA (95% CI), costs "
             f"{fmt_cost(arms_[lr]['cost_per_1k_usd'])} per 1k predictions and trains in "
             f"{arms_[lr]['train_minutes'] * 60:.0f} s.",
             f"- **A local model is only cheaper than luna few-shot while it stays busy:** above "
             f"{util((Q06, lf))} utilization for the 0.6B's CPU box and {util((q8, lf))} for the "
-            f"8B's A10G. One seed per model and one run per API arm.",
+            f"8B's A10G.",
         ]
     )
 

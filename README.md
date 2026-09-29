@@ -3,20 +3,19 @@
 Qwen3 LoRA/QLoRA vs prompted gpt-6 on Banking77: accuracy, paired tests, latency and cost on 3,080 test messages.
 
 <!-- headline:start -->
-- **gpt-6-sol with 20 retrieved examples beats the Qwen3-0.6B LoRA** by 1.2 points (95.0% vs 93.8% on 3,080 test messages, McNemar p=0.001, Holm-adjusted 0.005), at about 20x luna's cost. Luna few-shot (p=0.251) and the Qwen3-8B QLoRA (p=0.040, 0.160 after Holm over the secondary pairs) can't be separated from the 0.6B.
+- **gpt-6-sol with 20 retrieved examples beats the Qwen3-0.6B LoRA** by 1.2 points (95.0% vs 93.8% on 3,080 test messages, McNemar p=0.001, Holm-adjusted 0.005), at about 20x luna's cost. Luna few-shot (p=0.251) and the 8B QLoRA (Holm p=0.160) aren't significantly better than the 0.6B.
 - **Logistic regression on frozen bge-small embeddings** is **at most 1.2 points below** the 0.6B LoRA (95% CI), costs $0.0010 per 1k predictions and trains in 2 s.
-- **A local model is only cheaper than luna few-shot while it stays busy:** above 8.5% utilization for the 0.6B's CPU box and 66.3% for the 8B's A10G. One seed per model and one run per API arm.
+- **A local model is only cheaper than luna few-shot while it stays busy:** above 8.5% utilization for the 0.6B's CPU box and 66.3% for the 8B's A10G.
 <!-- headline:end -->
 
 ## Quickstart
 
 ```bash
 git clone https://github.com/rkemery/banking77-lora-vs-frontier.git && cd banking77-lora-vs-frontier
-uv sync --all-extras
-make demo
+uv run make demo
 ```
 
-`make demo` rebuilds the results below from `results/`, offline and with no keys. `make test` runs the tests. `make baselines` runs the two cheap baselines in a few minutes on a laptop CPU.
+`make demo` rebuilds the results below from `results/`, offline and with no keys. `make test` runs the tests. `make baselines` (the two cheap baselines, a few minutes on a laptop CPU) and the training targets need `uv sync --extra train` (torch).
 
 <details>
 <summary>Running everything</summary>
@@ -358,4 +357,4 @@ The code was written with Claude Code as a pair programmer, under my direction a
 
 ## License
 
-MIT for the code. Banking77 is CC-BY-4.0 (Casanueva et al. 2020, [arXiv 2003.04807](https://arxiv.org/abs/2003.04807)). See `DATA_SOURCES.md` for every dataset and model revision and its license.
+MIT for the code. Copyright (c) 2026 Richard K. Banking77 is CC-BY-4.0 (Casanueva et al. 2020, [arXiv 2003.04807](https://arxiv.org/abs/2003.04807)). See `DATA_SOURCES.md` for every dataset and model revision and its license.

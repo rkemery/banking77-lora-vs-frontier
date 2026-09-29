@@ -35,7 +35,7 @@ Detection with Dual Sentence Encoders", arXiv 2003.04807.
 | `Qwen/Qwen3-0.6B-Base` | `da87bfb608c14b7cf20ba1ce41287e8de496c0cd` | Apache-2.0 | LoRA with a classification head, CPU |
 | `answerdotai/ModernBERT-base` | `8949b909ec900327062f0ebf497f51aef5e6f0c8` | Apache-2.0 | Full fine-tune baseline, CPU |
 | `BAAI/bge-small-en-v1.5` | `5c38ec7c405ec4b44b94cc5a9bb96e735b38267a` | MIT | Frozen embeddings (logistic regression, kNN) and few-shot retrieval |
-| `Qwen/Qwen3-8B-Base` | `49e3418fbbbca6ecbdf9608b4d22e5a407081db4` | Apache-2.0 | Optional Colab QLoRA notebook, not run |
+| `Qwen/Qwen3-8B-Base` | `49e3418fbbbca6ecbdf9608b4d22e5a407081db4` | Apache-2.0 | 4-bit NF4 QLoRA, run once as a Hugging Face Job on one A10G (the Colab notebook version is not run) |
 
 ## Hosted models (Azure AI Foundry, pay per token)
 

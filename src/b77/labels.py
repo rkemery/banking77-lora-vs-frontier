@@ -1,10 +1,9 @@
 """One-line descriptions of the 77 intents for the prompting arms.
 
 Written once from the label names and a few training examples per label (never
-test), then frozen before any model saw them. They were not tuned on dev or
-test: there were no live calls while building this repo. Kept short on purpose,
-because every word is paid for on every one of 3,080 calls and counts against
-the deployment's tokens-per-minute limit.
+test), then frozen before the first live call. They were not tuned on dev or
+test. Kept short on purpose, because every word is paid for on every one of
+3,080 calls and counts against the deployment's tokens-per-minute limit.
 """
 
 from __future__ import annotations

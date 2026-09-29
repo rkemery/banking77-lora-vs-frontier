@@ -1,7 +1,7 @@
 """Classification metrics with bootstrap CIs, calibration error and latency percentiles.
 
 Paired comparisons between runs (McNemar, paired bootstrap, MDE) come from
-`llm_eval_harness.analysis.compare_runs` and are not reimplemented here.
+`llm_eval_harness.stats` and are not reimplemented here.
 """
 
 from __future__ import annotations

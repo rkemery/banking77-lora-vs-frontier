@@ -26,6 +26,7 @@ from llm_eval_harness import EvalRecord, RecordError
 from llm_eval_harness.records import check_unique, validate_record
 
 RUNS_DIR = Path("results/runs")
+SWEEP_PATH = Path("results/sweep.json")
 NO_PREDICTION = -1
 
 

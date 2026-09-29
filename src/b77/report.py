@@ -1,6 +1,6 @@
 """Build the README results section from committed run files. Offline, no keys, no models.
 
-Every number comes from `results/runs/*.jsonl` (harness records),
+Every number comes from `results/runs/*.jsonl.gz` (harness records),
 `results/sweep.json` and `results/timing.json`. A run that has not happened
 yet shows as a "pending" row with the command that produces it.
 """
@@ -19,12 +19,12 @@ from llm_eval_harness.stats import mde_paired_binary, paired_bootstrap
 from b77 import plan
 from b77.data import N_CLASSES
 from b77.metrics import expected_calibration_error, latency_percentiles, summarize
-from b77.runs import RUNS_DIR, Run, load_run, run_exists
+from b77.runs import RUNS_DIR, SWEEP_PATH, Run, load_run, run_exists
 from b77.splits import LEARNING_CURVE_K, LEARNING_CURVE_SEEDS, read_splits
+from b77.timing import read_timing
 
 README = Path("README.md")
 SUMMARY_PATH = Path("results/summary.json")
-SWEEP_PATH = Path("results/sweep.json")
 SMOKE_DIR = Path("results/smoke")
 
 # CPU price used to turn local latency into dollars: Azure D4s v6 (4 vCPU, 16 GiB,
@@ -50,6 +50,7 @@ class ArmSpec:
 
 
 def arms() -> list[ArmSpec]:
+    # Seeds 0-4 if run. Only seed 0 exists so far (`make train-final SEED=1` adds one).
     qwen = tuple(plan.RUN_QWEN_FINAL.format(seed=s) for s in range(5))
     return [
         ArmSpec(
@@ -444,12 +445,8 @@ def spend_lines(full: dict[str, dict[str, Any]]) -> list[str]:
     return lines
 
 
-BREAK_EVEN_PAIRS: list[tuple[str, str]] = [
-    (Q06, plan.RUN_LUNA_FEW),
-    (Q06, plan.RUN_SOL_FEW),
-    (plan.RUN_QWEN8B, plan.RUN_LUNA_FEW),
-    (plan.RUN_QWEN8B, plan.RUN_SOL_FEW),
-]
+# Break-even is worked out for the same local-vs-API pairs as the primary family.
+BREAK_EVEN_PAIRS = PRIMARY_PAIRS
 
 
 def break_even(full: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
@@ -663,8 +660,6 @@ def build(runs_dir: Path = RUNS_DIR) -> tuple[str, dict[str, Any]]:
         full[runs[0].run_id] = metrics
         all_runs[runs[0].run_id] = runs[0]
     n_dedup = dedup["kept"]
-    from b77.timing import read_timing
-
     timing = read_timing()
     comps = compare_pairs(all_runs)
     curve = curve_data(runs_dir)

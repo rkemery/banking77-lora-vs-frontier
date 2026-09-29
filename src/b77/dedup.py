@@ -1,8 +1,8 @@
 """Near-duplicate detection between test and train.
 
-For every test item we record its nearest train item under character 3 to 5
-gram TF-IDF cosine similarity, the same measure the ank018/lora-banking77
-project used. A test item is a near twin when that similarity is at least
+Each test item gets its nearest train item under character 3 to 5 gram
+TF-IDF cosine similarity, the same measure the ank018/lora-banking77 project
+used. A test item is a near twin when that similarity is at least
 0.90. The deduplicated test subset drops near twins whose train neighbour has
 the same label, since those are the items a fine-tuned model could answer by
 recall. Twins with a different label stay in, and are counted as a sign of

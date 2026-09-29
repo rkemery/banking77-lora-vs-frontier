@@ -2,7 +2,7 @@
 
 `b77 timing` trains each model for a few dozen steps on real Banking77
 batches, times single-message inference, and writes `results/timing.json`.
-The Makefile's long targets quote the estimates computed here. Throughput is
+The README results section quotes the estimates computed here. Throughput is
 measured on whatever else the machine is doing at the time, so treat the
 estimates as +/- 30%.
 """

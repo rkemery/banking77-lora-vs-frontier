@@ -22,7 +22,6 @@ import pyarrow.parquet as pq
 
 DATASET_ID = "legacy-datasets/banking77"
 REVISION = "f54121560de48f2852f90be299010d1d6dc612ec"
-LICENSE = "CC-BY-4.0"
 N_CLASSES = 77
 
 

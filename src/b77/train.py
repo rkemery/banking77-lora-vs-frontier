@@ -22,7 +22,6 @@ head (`score`) is trained in full, which PEFT does for task_type SEQ_CLS.
 
 from __future__ import annotations
 
-import json
 import math
 import sys
 import time
@@ -152,30 +151,6 @@ def apply_lora(model: Any, cfg: TrainConfig) -> Any:
         if param.requires_grad:
             param.data = param.data.float()
     return model
-
-
-def load_trained(run_dir: Path, model_key: str) -> tuple[Any, Any]:
-    """Load a model saved by `save_model` for inference."""
-    import torch
-    from transformers import AutoModelForSequenceClassification
-
-    spec = MODELS[model_key]
-    tokenizer = load_tokenizer(spec)
-    if spec.method == "full":
-        # fp32 weights as trained. `predict` runs matmuls in bf16 through autocast.
-        model = AutoModelForSequenceClassification.from_pretrained(
-            run_dir, dtype=torch.float32, attn_implementation=spec.attn_implementation
-        )
-        return model.eval(), tokenizer
-    base = AutoModelForSequenceClassification.from_pretrained(
-        spec.hf_id,
-        revision=spec.revision,
-        num_labels=N_CLASSES,
-        dtype=torch.bfloat16,
-        attn_implementation=spec.attn_implementation,
-    )
-    base.config.pad_token_id = tokenizer.pad_token_id
-    return attach_adapter(base, run_dir), tokenizer
 
 
 def attach_adapter(base: Any, run_dir: Path) -> Any:
@@ -366,9 +341,3 @@ def iter_progress(total: int, every: int, label: str) -> Callable[[int], None]:
             state["next"] = next(marks, total + 1)
 
     return report
-
-
-def save_result(result: TrainResult, path: Path, extra: dict[str, Any] | None = None) -> None:
-    payload = {**asdict(result), "examples_per_second": result.examples_per_second, **(extra or {})}
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")

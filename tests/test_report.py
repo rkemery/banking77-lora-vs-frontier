@@ -49,10 +49,12 @@ def test_report_shows_real_rows_and_pending_rows(tmp_path: Path) -> None:
     assert qwen["n"] == 3080
     assert qwen["dedup_n"] == read_splits()["test_dedup"]["kept"]
     assert qwen["accuracy_ci"][0] < qwen["accuracy"] < qwen["accuracy_ci"][1]
-    # The LoRA vs luna few-shot pair exists, so it gets a McNemar row and a break-even line.
+    # The LoRA vs luna few-shot pair exists, so it gets a McNemar row and a break-even row.
     assert f"| {plan.RUN_QWEN_FINAL.format(seed=0)} | {plan.RUN_LUNA_FEW} | 9" in body
     assert "| primary (" in body
-    assert f"vs `{plan.RUN_LUNA_FEW}` ($0.20): cheaper above" in body
+    assert f"| {plan.RUN_LUNA_FEW} | $0.20 | above " in body
+    # Every collapsed block leaves a blank line after </summary>, or GitHub won't render tables.
+    assert body.count("<details>") == body.count("</summary>\n\n") == 3
     # Too few runs for the headline, so it says so instead of printing half the numbers.
     assert "once every arm has run" in headline(summary)
     # API cost per 1k is the mean record cost times 1,000.

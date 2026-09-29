@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import sys
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
@@ -14,20 +13,16 @@ import numpy as np
 
 from b77 import plan
 from b77.data import DATASET_ID, REVISION, Split, fetch, load_split, sha256_file
-from b77.runs import RUNS_DIR, Prediction, write_run
-from b77.splits import SPLITS_PATH, read_splits, select, train_minus_dev
+from b77.runs import RUNS_DIR, SWEEP_PATH, Prediction, write_run
+from b77.splits import LEARNING_CURVE_K, SPLITS_PATH, read_splits, select, train_minus_dev
+from b77.train import log
 
 TWINS_PATH = Path("data/splits/test_near_twins.jsonl")
 SMOKE_DIR = Path("results/smoke")
-SWEEP_PATH = Path("results/sweep.json")
 FAKE_RUNS_DIR = Path("artifacts/fake-runs")
 # --dry-run: a few steps and a few items, written under artifacts/, to check a code path fast.
 DRY_DIR = Path("artifacts/dry-runs")
 DRY_STEPS, DRY_TEST_ITEMS, DRY_DEV_ITEMS = 3, 20, 50
-
-
-def log(message: str) -> None:
-    print(message, file=sys.stderr, flush=True)
 
 
 # ---------------------------------------------------------------- data and splits
@@ -218,10 +213,11 @@ def _time_search(queries: np.ndarray, keys: np.ndarray, n: int = 200) -> float:
     import time
 
     from b77.embed import top_k
+    from b77.prompting import FEW_SHOT_K
 
     start = time.perf_counter()
     for i in range(n):
-        top_k(queries[i : i + 1], keys, 20)
+        top_k(queries[i : i + 1], keys, FEW_SHOT_K)
     return (time.perf_counter() - start) * 1000.0 / n
 
 
@@ -487,7 +483,7 @@ def build_client(args: argparse.Namespace, arm: Any) -> tuple[Any, Any]:
 def cmd_prompt(args: argparse.Namespace) -> int:
     from llm_eval_harness import BudgetExceeded, CacheMiss
 
-    from b77.prompting import ARMS, Neighbors, run_arm
+    from b77.prompting import ARMS, FEW_SHOT_K, MAX_OUTPUT_TOKENS, Neighbors, run_arm
 
     arm = ARMS[args.arm]
     train, test, _ = load_all()
@@ -527,8 +523,8 @@ def cmd_prompt(args: argparse.Namespace) -> int:
     runs_dir = FAKE_RUNS_DIR if args.fake else RUNS_DIR
     info = {
         "arm": arm.key,
-        "few_shot_k": 20 if arm.few_shot else 0,
-        "max_output_tokens": 32,
+        "few_shot_k": FEW_SHOT_K if arm.few_shot else 0,
+        "max_output_tokens": MAX_OUTPUT_TOKENS,
         "reasoning_effort": "none",
         "cap_usd": None if cap is None else cap.cap_usd,
         "spent_usd_per_cap": None if cap is None else round(cap.spent_usd, 6),
@@ -548,12 +544,13 @@ def cmd_estimate(args: argparse.Namespace) -> int:
     from llm_eval_harness.report import write_section
 
     from b77.estimate import estimate_all
+    from b77.report import README
 
     train, test, _ = load_all()
     body = estimate_all(train, test)
     print(body)
     if args.write:
-        write_section(Path("README.md"), "estimate", body)
+        write_section(README, "estimate", body)
         print("README estimate section updated")
     return 0
 
@@ -595,7 +592,7 @@ def parser() -> argparse.ArgumentParser:
     s.add_argument("--seed", type=int, default=0)
     s.add_argument("--dry-run", action="store_true", help=dry)
     s = sub.add_parser("learning-curve", help="Qwen3-0.6B LoRA on k examples per class")
-    s.add_argument("--k", type=int, nargs="+", default=[5, 10, 20])
+    s.add_argument("--k", type=int, nargs="+", default=list(LEARNING_CURVE_K))
     s.add_argument("--draw", type=int, default=0)
     s.add_argument("--lr", type=float, default=None)
     s.add_argument("--dry-run", action="store_true", help=dry)

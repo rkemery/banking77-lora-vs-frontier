@@ -1,0 +1,24 @@
+{
+  "run_id": "qwen3-8b-qlora-r16-s0",
+  "config": "qwen3-8b-qlora",
+  "model": "Qwen/Qwen3-8B-Base",
+  "model_revision": "49e3418fbbbca6ecbdf9608b4d22e5a407081db4",
+  "arm": "Qwen3-8B-Base, 4-bit NF4 QLoRA r16 alpha 32, all linear layers, class head",
+  "train_size": 10003,
+  "epochs": 2,
+  "steps": 1252,
+  "batch_size": 16,
+  "lr": 0.0003,
+  "seed": 0,
+  "train_seconds": 1323.1,
+  "trainable_params": 43962368,
+  "smoke": false,
+  "latency": "tokenize plus one forward pass per message on the GPU, batch 1",
+  "usd_per_hour": 1.5,
+  "hardware": {
+    "gpu": "NVIDIA A10G",
+    "hf_jobs_flavor": "a10g-large",
+    "torch": "2.14.0+cu130",
+    "python": "3.12.12"
+  }
+}

@@ -1,0 +1,64 @@
+[project]
+name = "banking77-lora-vs-frontier"
+version = "0.1.0"
+description = "LoRA on a small open model vs prompting frontier models on Banking77: accuracy, macro-F1, cost and latency with paired CIs."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Richard Kemery" }]
+requires-python = ">=3.11"
+dependencies = [
+    "llm-eval-harness[azure]",
+    "numpy>=1.26",
+    "pyarrow>=25.0",
+    "scikit-learn>=1.9",
+]
+
+[project.optional-dependencies]
+# Local models: bge-small embeddings, ModernBERT and Qwen3 LoRA training on CPU.
+train = [
+    "peft>=0.21.0",
+    "safetensors>=0.8.0",
+    "torch>=2.14.0",
+    "transformers>=5.17.0",
+]
+
+[project.scripts]
+b77 = "b77.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.8.17,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "b77"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.16.9",
+]
+
+[tool.uv.sources]
+llm-eval-harness = { git = "https://github.com/rkemery/llm-eval-harness", tag = "v0.1.0" }
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-include = ["*.ipynb"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "PT", "C4", "RET", "PTH"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+    "network: downloads a public dataset or model from Hugging Face (skipped unless B77_NETWORK_TESTS=1)",
+]

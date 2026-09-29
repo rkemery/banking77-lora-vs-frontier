@@ -1,0 +1,15 @@
+{
+  "run_id": "gpt-6-luna-fewshot-k20",
+  "config": "luna-fewshot",
+  "model": "gpt-6-luna",
+  "arm": "luna-fewshot",
+  "few_shot_k": 20,
+  "max_output_tokens": 32,
+  "reasoning_effort": "none",
+  "cap_usd": 2.0,
+  "spent_usd_per_cap": 0.219529,
+  "charged_for_errors_usd": 0.0,
+  "cost_basis": "list price from measured usage (harness DEFAULT_PRICES, 2026-09-28)",
+  "latency": "one Responses API call over the network, measured by the client",
+  "fake": false
+}

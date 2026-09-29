@@ -1,0 +1,236 @@
+{
+  "run_id": "qwen3-0.6b-lora-r16-k20-s0",
+  "config": {
+    "model": "qwen3-0.6b",
+    "lr": 0.0003,
+    "epochs": 10,
+    "batch_size": 16,
+    "warmup_ratio": 0.06,
+    "weight_decay": 0.0,
+    "lora_r": 16,
+    "lora_alpha": 32,
+    "lora_dropout": 0.0,
+    "max_length": 128,
+    "seed": 0,
+    "grad_clip": 1.0,
+    "max_steps": null,
+    "eval_batch_size": 64
+  },
+  "model": "Qwen/Qwen3-0.6B-Base",
+  "arm": "Qwen3-0.6B-Base LoRA r16, 20 examples per class (draw 0), lr 0.0003",
+  "hf_id": "Qwen/Qwen3-0.6B-Base",
+  "revision": "da87bfb608c14b7cf20ba1ce41287e8de496c0cd",
+  "method": "lora",
+  "train_size": 1540,
+  "train_seconds": 1044.2,
+  "examples_per_second": 14.75,
+  "steps": 970,
+  "loss_history": [
+    {
+      "step": 25,
+      "epoch": 1,
+      "loss": 5.724904956817627
+    },
+    {
+      "step": 50,
+      "epoch": 1,
+      "loss": 4.404134588241577
+    },
+    {
+      "step": 75,
+      "epoch": 1,
+      "loss": 2.5992165088653563
+    },
+    {
+      "step": 100,
+      "epoch": 2,
+      "loss": 1.6052727937698363
+    },
+    {
+      "step": 125,
+      "epoch": 2,
+      "loss": 0.6278861081600189
+    },
+    {
+      "step": 150,
+      "epoch": 2,
+      "loss": 0.7290859723091125
+    },
+    {
+      "step": 175,
+      "epoch": 2,
+      "loss": 0.6114111459255218
+    },
+    {
+      "step": 200,
+      "epoch": 3,
+      "loss": 0.6202726522088051
+    },
+    {
+      "step": 225,
+      "epoch": 3,
+      "loss": 0.15009655887261034
+    },
+    {
+      "step": 250,
+      "epoch": 3,
+      "loss": 0.13641137817874552
+    },
+    {
+      "step": 275,
+      "epoch": 3,
+      "loss": 0.31156865678727624
+    },
+    {
+      "step": 300,
+      "epoch": 4,
+      "loss": 0.1410560023621656
+    },
+    {
+      "step": 325,
+      "epoch": 4,
+      "loss": 0.08837994170375169
+    },
+    {
+      "step": 350,
+      "epoch": 4,
+      "loss": 0.11515402967110276
+    },
+    {
+      "step": 375,
+      "epoch": 4,
+      "loss": 0.05934417367214337
+    },
+    {
+      "step": 400,
+      "epoch": 5,
+      "loss": 0.015663817744134577
+    },
+    {
+      "step": 425,
+      "epoch": 5,
+      "loss": 0.008393979536922416
+    },
+    {
+      "step": 450,
+      "epoch": 5,
+      "loss": 0.06715261341800215
+    },
+    {
+      "step": 475,
+      "epoch": 5,
+      "loss": 0.016991766427527182
+    },
+    {
+      "step": 500,
+      "epoch": 6,
+      "loss": 0.01663886822410859
+    },
+    {
+      "step": 525,
+      "epoch": 6,
+      "loss": 0.030260880562418605
+    },
+    {
+      "step": 550,
+      "epoch": 6,
+      "loss": 0.001285068967117695
+    },
+    {
+      "step": 575,
+      "epoch": 6,
+      "loss": 0.001561294284038013
+    },
+    {
+      "step": 600,
+      "epoch": 7,
+      "loss": 0.008117769268501433
+    },
+    {
+      "step": 625,
+      "epoch": 7,
+      "loss": 0.0015412222728446068
+    },
+    {
+      "step": 650,
+      "epoch": 7,
+      "loss": 0.002480484843290469
+    },
+    {
+      "step": 675,
+      "epoch": 7,
+      "loss": 8.161289395502535e-05
+    },
+    {
+      "step": 700,
+      "epoch": 8,
+      "loss": 0.0009229977702489122
+    },
+    {
+      "step": 725,
+      "epoch": 8,
+      "loss": 0.00010869213452679106
+    },
+    {
+      "step": 750,
+      "epoch": 8,
+      "loss": 6.18394419143442e-05
+    },
+    {
+      "step": 775,
+      "epoch": 8,
+      "loss": 0.00010792812887302716
+    },
+    {
+      "step": 800,
+      "epoch": 9,
+      "loss": 4.2180143700534246e-05
+    },
+    {
+      "step": 825,
+      "epoch": 9,
+      "loss": 4.067728661539149e-05
+    },
+    {
+      "step": 850,
+      "epoch": 9,
+      "loss": 3.987811172919464e-05
+    },
+    {
+      "step": 875,
+      "epoch": 10,
+      "loss": 5.005070626793895e-05
+    },
+    {
+      "step": 900,
+      "epoch": 10,
+      "loss": 3.46132739832683e-05
+    },
+    {
+      "step": 925,
+      "epoch": 10,
+      "loss": 3.214878634025808e-05
+    },
+    {
+      "step": 950,
+      "epoch": 10,
+      "loss": 4.669686650231597e-05
+    },
+    {
+      "step": 970,
+      "epoch": 10,
+      "loss": 3.7875111911489515e-05
+    }
+  ],
+  "test_batch_size": 64,
+  "latency": "not measured (batched evaluation)",
+  "adapter_dir": null,
+  "hardware": {
+    "cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
+    "logical_cpus": 4,
+    "torch_threads": 2,
+    "torch": "2.14.0+cpu",
+    "python": "3.11.16",
+    "load_average_1m": 2.0
+  }
+}

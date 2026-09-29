@@ -1,0 +1,578 @@
+{
+  "arms": {
+    "logreg-bge-small": {
+      "run_id": "logreg-bge-small",
+      "n": 3080,
+      "accuracy": 0.9340909090909091,
+      "accuracy_ci": [
+        0.925,
+        0.9425324675324676
+      ],
+      "macro_f1": 0.9339559466218784,
+      "macro_f1_ci": [
+        0.9241372802942476,
+        0.9418255395422193
+      ],
+      "dedup_n": 2662,
+      "dedup_accuracy": 0.9256198347107438,
+      "dedup_accuracy_ci": [
+        0.9154770848985725,
+        0.9353869271224643
+      ],
+      "ece": 0.10351525649350637,
+      "errors": 0,
+      "invalid": 0,
+      "cost_per_1k_usd": 0.0010231043856421358,
+      "total_cost_usd": 0.0,
+      "latency_p50_ms": 17.417,
+      "latency_p95_ms": 25.6042,
+      "train_minutes": 0.035337439583327065,
+      "train_cost_usd": 0.00011896937993053448,
+      "train_on": "local"
+    },
+    "knn-bge-small-k20": {
+      "run_id": "knn-bge-small-k20",
+      "n": 3080,
+      "accuracy": 0.9224025974025974,
+      "accuracy_ci": [
+        0.912987012987013,
+        0.9318181818181818
+      ],
+      "macro_f1": 0.9223047388710495,
+      "macro_f1_ci": [
+        0.9119589584696306,
+        0.9306656354370686
+      ],
+      "dedup_n": 2662,
+      "dedup_accuracy": 0.9132231404958677,
+      "dedup_accuracy_ci": [
+        0.9023290758827949,
+        0.9237415477084898
+      ],
+      "ece": 0.03949448701298699,
+      "errors": 0,
+      "invalid": 0,
+      "cost_per_1k_usd": 0.0010867529496753248,
+      "total_cost_usd": 0.0,
+      "latency_p50_ms": 18.554499999999997,
+      "latency_p95_ms": 26.746
+    },
+    "modernbert-base-full": {
+      "run_id": "modernbert-base-full",
+      "n": 3080,
+      "accuracy": 0.938961038961039,
+      "accuracy_ci": [
+        0.9301948051948052,
+        0.9474025974025974
+      ],
+      "macro_f1": 0.9388768400716814,
+      "macro_f1_ci": [
+        0.9293183306275535,
+        0.9465286703602063
+      ],
+      "dedup_n": 2662,
+      "dedup_accuracy": 0.930503380916604,
+      "dedup_accuracy_ci": [
+        0.9203606311044328,
+        0.9398948159278738
+      ],
+      "ece": 0.01958594805194807,
+      "errors": 0,
+      "invalid": 0,
+      "cost_per_1k_usd": 0.0029714568547979806,
+      "total_cost_usd": 0.0,
+      "latency_p50_ms": 52.1465,
+      "latency_p95_ms": 58.7405,
+      "train_minutes": 14.58,
+      "train_cost_usd": 0.049086,
+      "train_on": "local"
+    },
+    "qwen3-0.6b-lora-r16-s0": {
+      "run_id": "qwen3-0.6b-lora-r16-s0",
+      "n": 3080,
+      "accuracy": 0.9383116883116883,
+      "accuracy_ci": [
+        0.9295454545454546,
+        0.9464285714285714
+      ],
+      "macro_f1": 0.938243255063703,
+      "macro_f1_ci": [
+        0.9286564737479269,
+        0.9458835283444896
+      ],
+      "dedup_n": 2662,
+      "dedup_accuracy": 0.9293764087152517,
+      "dedup_accuracy_ci": [
+        0.9196093163035312,
+        0.9387678437265214
+      ],
+      "ece": 0.031158571428571404,
+      "errors": 0,
+      "invalid": 0,
+      "cost_per_1k_usd": 0.0060823821939033195,
+      "total_cost_usd": 0.0,
+      "latency_p50_ms": 104.749,
+      "latency_p95_ms": 131.3011,
+      "train_minutes": 23.31833333333333,
+      "train_cost_usd": 0.07850505555555555,
+      "train_on": "local"
+    },
+    "gpt-6-luna-zeroshot": {
+      "run_id": "gpt-6-luna-zeroshot",
+      "n": 3080,
+      "accuracy": 0.8548701298701299,
+      "accuracy_ci": [
+        0.8422077922077922,
+        0.8672077922077922
+      ],
+      "macro_f1": 0.8507966224460477,
+      "macro_f1_ci": [
+        0.8370104734964485,
+        0.8615536950236359
+      ],
+      "dedup_n": 2662,
+      "dedup_accuracy": 0.8448534936138242,
+      "dedup_accuracy_ci": [
+        0.830954169797145,
+        0.8580015026296018
+      ],
+      "ece": null,
+      "errors": 0,
+      "invalid": 0,
+      "cost_per_1k_usd": 0.027166220779220786,
+      "total_cost_usd": 0.08367196000000002,
+      "latency_p50_ms": 1339.469,
+      "latency_p95_ms": 3220.239299999999
+    },
+    "gpt-6-luna-fewshot-k20": {
+      "run_id": "gpt-6-luna-fewshot-k20",
+      "n": 3080,
+      "accuracy": 0.9431818181818182,
+      "accuracy_ci": [
+        0.935064935064935,
+        0.9512987012987013
+      ],
+      "macro_f1": 0.9431079351777972,
+      "macro_f1_ci": [
+        0.9342140391246593,
+        0.9503564055484712
+      ],
+      "dedup_n": 2662,
+      "dedup_accuracy": 0.935762584522915,
+      "dedup_accuracy_ci": [
+        0.9263711495116453,
+        0.944778362133734
+      ],
+      "ece": null,
+      "errors": 0,
+      "invalid": 0,
+      "cost_per_1k_usd": 0.07134289610389609,
+      "total_cost_usd": 0.21973611999999998,
+      "latency_p50_ms": 1357.9935,
+      "latency_p95_ms": 3339.0671999999986
+    },
+    "gpt-6-sol-fewshot-k20": {
+      "run_id": "gpt-6-sol-fewshot-k20",
+      "n": 3080,
+      "accuracy": 0.9503246753246753,
+      "accuracy_ci": [
+        0.9425324675324676,
+        0.9577922077922078
+      ],
+      "macro_f1": 0.9502540006909188,
+      "macro_f1_ci": [
+        0.9418613671433712,
+        0.9572077752106827
+      ],
+      "dedup_n": 2662,
+      "dedup_accuracy": 0.9429000751314801,
+      "dedup_accuracy_ci": [
+        0.9342505634861007,
+        0.9515401953418482
+      ],
+      "ece": null,
+      "errors": 0,
+      "invalid": 0,
+      "cost_per_1k_usd": 1.4278671428571394,
+      "total_cost_usd": 4.39783079999999,
+      "latency_p50_ms": 1704.4745,
+      "latency_p95_ms": 3588.9976999999985
+    },
+    "qwen3-8b-qlora-r16-s0": {
+      "run_id": "qwen3-8b-qlora-r16-s0",
+      "n": 3080,
+      "accuracy": 0.9461038961038961,
+      "accuracy_ci": [
+        0.937987012987013,
+        0.9538961038961039
+      ],
+      "macro_f1": 0.9460340108540479,
+      "macro_f1_ci": [
+        0.9373377899135126,
+        0.9532223415770278
+      ],
+      "dedup_n": 2662,
+      "dedup_accuracy": 0.9387678437265214,
+      "dedup_accuracy_ci": [
+        0.9297520661157025,
+        0.9474079639368895
+      ],
+      "ece": 0.025711019480519466,
+      "errors": 0,
+      "invalid": 0,
+      "cost_per_1k_usd": 0.04732536661255411,
+      "total_cost_usd": 0.0,
+      "latency_p50_ms": 112.4065,
+      "latency_p95_ms": 124.09869999999997,
+      "train_minutes": 22.051666666666666,
+      "train_cost_usd": 0.5512916666666666,
+      "train_on": "gpu"
+    }
+  },
+  "dedup": {
+    "method": "Nearest train item by cosine similarity of character 3-5 gram TF-IDF vectors (scikit-learn TfidfVectorizer, analyzer='char_wb', lowercase, fit on train and test). A test item is removed when its nearest train item has similarity >= 0.90 and the same label.",
+    "threshold": 0.9,
+    "near_twins": 440,
+    "same_label_twins": 418,
+    "different_label_twins": 22,
+    "kept": 2662
+  },
+  "paired": [
+    {
+      "baseline": "qwen3-0.6b-lora-r16-s0",
+      "candidate": "gpt-6-luna-fewshot-k20",
+      "family": "primary",
+      "n": 3080,
+      "baseline_accuracy": 0.9383116883116883,
+      "candidate_accuracy": 0.9431818181818182,
+      "diff": 0.00487012987012987,
+      "diff_ci": [
+        -0.002922077922077922,
+        0.012662337662337663
+      ],
+      "p": 0.25133111748209397,
+      "base_only": 67,
+      "cand_only": 82,
+      "mde": 0.011351927224691812,
+      "holm_p": 0.7242951526955328,
+      "holm_p_all": 1.0
+    },
+    {
+      "baseline": "qwen3-0.6b-lora-r16-s0",
+      "candidate": "gpt-6-sol-fewshot-k20",
+      "family": "primary",
+      "n": 3080,
+      "baseline_accuracy": 0.9383116883116883,
+      "candidate_accuracy": 0.9503246753246753,
+      "diff": 0.012012987012987014,
+      "diff_ci": [
+        0.00487012987012987,
+        0.019155844155844155
+      ],
+      "p": 0.0013073851234999883,
+      "base_only": 45,
+      "cand_only": 82,
+      "mde": 0.010498217173985072,
+      "holm_p": 0.005229540493999953,
+      "holm_p_all": 0.01438123635849987
+    },
+    {
+      "baseline": "qwen3-8b-qlora-r16-s0",
+      "candidate": "gpt-6-luna-fewshot-k20",
+      "family": "primary",
+      "n": 3080,
+      "baseline_accuracy": 0.9461038961038961,
+      "candidate_accuracy": 0.9431818181818182,
+      "diff": -0.002922077922077922,
+      "diff_ci": [
+        -0.010064935064935065,
+        0.0042207792207792205
+      ],
+      "p": 0.46720710207696564,
+      "base_only": 65,
+      "cand_only": 56,
+      "mde": 0.01025475774492536,
+      "holm_p": 0.7242951526955328,
+      "holm_p_all": 1.0
+    },
+    {
+      "baseline": "qwen3-8b-qlora-r16-s0",
+      "candidate": "gpt-6-sol-fewshot-k20",
+      "family": "primary",
+      "n": 3080,
+      "baseline_accuracy": 0.9461038961038961,
+      "candidate_accuracy": 0.9503246753246753,
+      "diff": 0.0042207792207792205,
+      "diff_ci": [
+        -0.0022727272727272726,
+        0.010714285714285714
+      ],
+      "p": 0.2414317175651776,
+      "base_only": 46,
+      "cand_only": 59,
+      "mde": 0.009562058882279827,
+      "holm_p": 0.7242951526955328,
+      "holm_p_all": 1.0
+    },
+    {
+      "baseline": "logreg-bge-small",
+      "candidate": "knn-bge-small-k20",
+      "family": "secondary",
+      "n": 3080,
+      "baseline_accuracy": 0.9340909090909091,
+      "candidate_accuracy": 0.9224025974025974,
+      "diff": -0.011688311688311689,
+      "diff_ci": [
+        -0.018839285714285642,
+        -0.004545454545454545
+      ],
+      "p": 0.0020237797357403843,
+      "base_only": 83,
+      "cand_only": 47,
+      "mde": 0.010617318091454444,
+      "holm_p_secondary": 0.012142678414442306,
+      "holm_p_all": 0.01821401762166346
+    },
+    {
+      "baseline": "logreg-bge-small",
+      "candidate": "modernbert-base-full",
+      "family": "secondary",
+      "n": 3080,
+      "baseline_accuracy": 0.9340909090909091,
+      "candidate_accuracy": 0.938961038961039,
+      "diff": 0.00487012987012987,
+      "diff_ci": [
+        -0.0025974025974025974,
+        0.012337662337662338
+      ],
+      "p": 0.23828700628615218,
+      "base_only": 63,
+      "cand_only": 78,
+      "mde": 0.01104524290406859,
+      "holm_p_secondary": 0.7148610188584565,
+      "holm_p_all": 1.0
+    },
+    {
+      "baseline": "logreg-bge-small",
+      "candidate": "qwen3-0.6b-lora-r16-s0",
+      "family": "secondary",
+      "n": 3080,
+      "baseline_accuracy": 0.9340909090909091,
+      "candidate_accuracy": 0.9383116883116883,
+      "diff": 0.0042207792207792205,
+      "diff_ci": [
+        -0.003896103896103896,
+        0.012012987012987014
+      ],
+      "p": 0.33823533079501195,
+      "base_only": 72,
+      "cand_only": 85,
+      "mde": 0.011651861512815796,
+      "holm_p_secondary": 0.7148610188584565,
+      "holm_p_all": 1.0
+    },
+    {
+      "baseline": "logreg-bge-small",
+      "candidate": "qwen3-8b-qlora-r16-s0",
+      "family": "secondary",
+      "n": 3080,
+      "baseline_accuracy": 0.9340909090909091,
+      "candidate_accuracy": 0.9461038961038961,
+      "diff": 0.012012987012987014,
+      "diff_ci": [
+        0.004545454545454545,
+        0.01948051948051948
+      ],
+      "p": 0.0016943197076057012,
+      "base_only": 48,
+      "cand_only": 85,
+      "mde": 0.010735082626342773,
+      "holm_p_secondary": 0.011860237953239908,
+      "holm_p_all": 0.01694319707605701
+    },
+    {
+      "baseline": "modernbert-base-full",
+      "candidate": "qwen3-0.6b-lora-r16-s0",
+      "family": "secondary",
+      "n": 3080,
+      "baseline_accuracy": 0.938961038961039,
+      "candidate_accuracy": 0.9383116883116883,
+      "diff": -0.0006493506493506494,
+      "diff_ci": [
+        -0.008441558441558441,
+        0.006818181818181818
+      ],
+      "p": 0.9340795771546334,
+      "base_only": 74,
+      "cand_only": 72,
+      "mde": 0.011237466490113892,
+      "holm_p_secondary": 0.9340795771546334,
+      "holm_p_all": 1.0
+    },
+    {
+      "baseline": "qwen3-0.6b-lora-r16-s0",
+      "candidate": "qwen3-8b-qlora-r16-s0",
+      "family": "secondary",
+      "n": 3080,
+      "baseline_accuracy": 0.9383116883116883,
+      "candidate_accuracy": 0.9461038961038961,
+      "diff": 0.007792207792207792,
+      "diff_ci": [
+        0.0006493506493506494,
+        0.014935064935064935
+      ],
+      "p": 0.04003575935628392,
+      "base_only": 51,
+      "cand_only": 75,
+      "mde": 0.010458157279274682,
+      "holm_p_secondary": 0.1601430374251357,
+      "holm_p_all": 0.2802503154939875
+    },
+    {
+      "baseline": "qwen3-0.6b-lora-r16-s0",
+      "candidate": "gpt-6-luna-zeroshot",
+      "family": "secondary",
+      "n": 3080,
+      "baseline_accuracy": 0.9383116883116883,
+      "candidate_accuracy": 0.8548701298701299,
+      "diff": -0.08344155844155844,
+      "diff_ci": [
+        -0.09577922077922078,
+        -0.0711038961038961
+      ],
+      "p": 2.7941194239864563e-41,
+      "base_only": 325,
+      "cand_only": 68,
+      "mde": 0.01830953901464289,
+      "holm_p_secondary": 2.514707481587811e-40,
+      "holm_p_all": 3.632355251182393e-40
+    },
+    {
+      "baseline": "qwen3-8b-qlora-r16-s0",
+      "candidate": "gpt-6-luna-zeroshot",
+      "family": "secondary",
+      "n": 3080,
+      "baseline_accuracy": 0.9461038961038961,
+      "candidate_accuracy": 0.8548701298701299,
+      "diff": -0.09123376623376624,
+      "diff_ci": [
+        -0.10324675324675325,
+        -0.07954545454545454
+      ],
+      "p": 3.146807505827613e-55,
+      "base_only": 322,
+      "cand_only": 41,
+      "mde": 0.017605636801038466,
+      "holm_p_secondary": 3.1468075058276133e-54,
+      "holm_p_all": 4.4055305081586583e-54
+    },
+    {
+      "baseline": "knn-bge-small-k20",
+      "candidate": "gpt-6-luna-fewshot-k20",
+      "family": "secondary",
+      "n": 3080,
+      "baseline_accuracy": 0.9224025974025974,
+      "candidate_accuracy": 0.9431818181818182,
+      "diff": 0.02077922077922078,
+      "diff_ci": [
+        0.012662337662337663,
+        0.028896103896103895
+      ],
+      "p": 6.331600153869774e-07,
+      "base_only": 50,
+      "cand_only": 114,
+      "mde": 0.011906400903478845,
+      "holm_p_secondary": 5.065280123095819e-06,
+      "holm_p_all": 7.597920184643729e-06
+    },
+    {
+      "baseline": "gpt-6-luna-zeroshot",
+      "candidate": "gpt-6-luna-fewshot-k20",
+      "family": "secondary",
+      "n": 3080,
+      "baseline_accuracy": 0.8548701298701299,
+      "candidate_accuracy": 0.9431818181818182,
+      "diff": 0.08831168831168831,
+      "diff_ci": [
+        0.0775974025974026,
+        0.09902597402597403
+      ],
+      "p": 2.204154881869035e-66,
+      "base_only": 15,
+      "cand_only": 287,
+      "mde": 0.016078418880314027,
+      "holm_p_secondary": 2.424570370055939e-65,
+      "holm_p_all": 3.3062323228035526e-65
+    },
+    {
+      "baseline": "gpt-6-luna-fewshot-k20",
+      "candidate": "gpt-6-sol-fewshot-k20",
+      "family": "secondary",
+      "n": 3080,
+      "baseline_accuracy": 0.9431818181818182,
+      "candidate_accuracy": 0.9503246753246753,
+      "diff": 0.007142857142857143,
+      "diff_ci": [
+        0.001948051948051948,
+        0.012337662337662338
+      ],
+      "p": 0.008146902228698568,
+      "base_only": 21,
+      "cand_only": 43,
+      "mde": 0.007474428647524352,
+      "holm_p_secondary": 0.040734511143492844,
+      "holm_p_all": 0.06517521782958854
+    }
+  ],
+  "learning_curve": {
+    "5": {
+      "logreg": 0.8332251082251082,
+      "logreg_sd": 0.004959497505363447,
+      "lora": 0.6162337662337662
+    },
+    "10": {
+      "logreg": 0.8734848484848484,
+      "logreg_sd": 0.009534257354648083,
+      "lora": 0.7931818181818182
+    },
+    "20": {
+      "logreg": 0.8926406926406926,
+      "logreg_sd": 0.004136691526756813,
+      "lora": 0.8685064935064936
+    }
+  },
+  "break_even": [
+    {
+      "local": "qwen3-0.6b-lora-r16-s0",
+      "api": "gpt-6-luna-fewshot-k20",
+      "local_on": "CPU",
+      "local_cost_per_1k_usd": 0.0060823821939033195,
+      "api_cost_per_1k_usd": 0.07134289610389609,
+      "utilization": 0.08525561094471965
+    },
+    {
+      "local": "qwen3-0.6b-lora-r16-s0",
+      "api": "gpt-6-sol-fewshot-k20",
+      "local_on": "CPU",
+      "local_cost_per_1k_usd": 0.0060823821939033195,
+      "api_cost_per_1k_usd": 1.4278671428571394,
+      "utilization": 0.004259767601159706
+    },
+    {
+      "local": "qwen3-8b-qlora-r16-s0",
+      "api": "gpt-6-luna-fewshot-k20",
+      "local_on": "A10G",
+      "local_cost_per_1k_usd": 0.04732536661255411,
+      "api_cost_per_1k_usd": 0.07134289610389609,
+      "utilization": 0.6633507916980909
+    },
+    {
+      "local": "qwen3-8b-qlora-r16-s0",
+      "api": "gpt-6-sol-fewshot-k20",
+      "local_on": "A10G",
+      "local_cost_per_1k_usd": 0.04732536661255411,
+      "api_cost_per_1k_usd": 1.4278671428571394,
+      "utilization": 0.0331440966684455
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "model": "answerdotai/ModernBERT-base",
+  "revision": "8949b909ec900327062f0ebf497f51aef5e6f0c8",
+  "config": {
+    "model": "modernbert-base",
+    "lr": 5e-05,
+    "epochs": 1,
+    "batch_size": 32,
+    "warmup_ratio": 0.06,
+    "weight_decay": 0.01,
+    "lora_r": 16,
+    "lora_alpha": 32,
+    "lora_dropout": 0.0,
+    "max_length": 128,
+    "seed": 0,
+    "grad_clip": 1.0,
+    "max_steps": 200,
+    "eval_batch_size": 64
+  },
+  "steps": 200,
+  "train_size": 9003,
+  "examples_seen": 6379,
+  "train_seconds": 544.2,
+  "examples_per_second": 11.72,
+  "dev_size": 1000,
+  "dev_accuracy": 0.854,
+  "history": [
+    {
+      "step": 25,
+      "epoch": 1,
+      "loss": 4.297552270889282
+    },
+    {
+      "step": 50,
+      "epoch": 1,
+      "loss": 3.2566033840179442
+    },
+    {
+      "step": 75,
+      "epoch": 1,
+      "loss": 1.7965753722190856
+    },
+    {
+      "step": 100,
+      "epoch": 1,
+      "loss": 1.0191719388961793
+    },
+    {
+      "step": 125,
+      "epoch": 1,
+      "loss": 0.7401003181934357
+    },
+    {
+      "step": 150,
+      "epoch": 1,
+      "loss": 0.7705140829086303
+    },
+    {
+      "step": 175,
+      "epoch": 1,
+      "loss": 0.6254533445835113
+    },
+    {
+      "step": 200,
+      "epoch": 1,
+      "loss": 0.5887880051136016
+    },
+    {
+      "step": 200,
+      "epoch": 1,
+      "dev_accuracy": 0.854
+    }
+  ],
+  "hardware": {
+    "cpu": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+    "logical_cpus": 4,
+    "torch_threads": 2,
+    "torch": "2.14.0+cpu",
+    "python": "3.11.15",
+    "load_average_1m": 8.06
+  }
+}

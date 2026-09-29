@@ -1,0 +1,231 @@
+{
+  "run_id": "modernbert-base-full",
+  "config": {
+    "model": "modernbert-base",
+    "lr": 5e-05,
+    "epochs": 3,
+    "batch_size": 32,
+    "warmup_ratio": 0.06,
+    "weight_decay": 0.01,
+    "lora_r": 16,
+    "lora_alpha": 32,
+    "lora_dropout": 0.0,
+    "max_length": 128,
+    "seed": 0,
+    "grad_clip": 1.0,
+    "max_steps": null,
+    "eval_batch_size": 64
+  },
+  "model": "answerdotai/ModernBERT-base",
+  "arm": "ModernBERT-base full fine-tune, lr 5e-5, all of train",
+  "hf_id": "answerdotai/ModernBERT-base",
+  "revision": "8949b909ec900327062f0ebf497f51aef5e6f0c8",
+  "method": "full",
+  "train_size": 10003,
+  "train_seconds": 874.8,
+  "examples_per_second": 34.31,
+  "steps": 939,
+  "loss_history": [
+    {
+      "step": 25,
+      "epoch": 1,
+      "loss": 4.407905445098877
+    },
+    {
+      "step": 50,
+      "epoch": 1,
+      "loss": 3.9971316719055174
+    },
+    {
+      "step": 75,
+      "epoch": 1,
+      "loss": 2.619781050682068
+    },
+    {
+      "step": 100,
+      "epoch": 1,
+      "loss": 1.5030930209159852
+    },
+    {
+      "step": 125,
+      "epoch": 1,
+      "loss": 0.9308147501945495
+    },
+    {
+      "step": 150,
+      "epoch": 1,
+      "loss": 0.7151147902011872
+    },
+    {
+      "step": 175,
+      "epoch": 1,
+      "loss": 0.5457807224988938
+    },
+    {
+      "step": 200,
+      "epoch": 1,
+      "loss": 0.5463525211811066
+    },
+    {
+      "step": 225,
+      "epoch": 1,
+      "loss": 0.5655096125602722
+    },
+    {
+      "step": 250,
+      "epoch": 1,
+      "loss": 0.45369762778282163
+    },
+    {
+      "step": 275,
+      "epoch": 1,
+      "loss": 0.4329653716087341
+    },
+    {
+      "step": 300,
+      "epoch": 1,
+      "loss": 0.3884113788604736
+    },
+    {
+      "step": 325,
+      "epoch": 2,
+      "loss": 0.30912114575505256
+    },
+    {
+      "step": 350,
+      "epoch": 2,
+      "loss": 0.2247646452486515
+    },
+    {
+      "step": 375,
+      "epoch": 2,
+      "loss": 0.16641003429889678
+    },
+    {
+      "step": 400,
+      "epoch": 2,
+      "loss": 0.18106979839503765
+    },
+    {
+      "step": 425,
+      "epoch": 2,
+      "loss": 0.1812445436231792
+    },
+    {
+      "step": 450,
+      "epoch": 2,
+      "loss": 0.21152636546641587
+    },
+    {
+      "step": 475,
+      "epoch": 2,
+      "loss": 0.17041104212403296
+    },
+    {
+      "step": 500,
+      "epoch": 2,
+      "loss": 0.15923328287899494
+    },
+    {
+      "step": 525,
+      "epoch": 2,
+      "loss": 0.10408050140365958
+    },
+    {
+      "step": 550,
+      "epoch": 2,
+      "loss": 0.16782220344990492
+    },
+    {
+      "step": 575,
+      "epoch": 2,
+      "loss": 0.18449034556746483
+    },
+    {
+      "step": 600,
+      "epoch": 2,
+      "loss": 0.16620853185653686
+    },
+    {
+      "step": 625,
+      "epoch": 2,
+      "loss": 0.1861610671132803
+    },
+    {
+      "step": 650,
+      "epoch": 3,
+      "loss": 0.04418972229585052
+    },
+    {
+      "step": 675,
+      "epoch": 3,
+      "loss": 0.02160023180767894
+    },
+    {
+      "step": 700,
+      "epoch": 3,
+      "loss": 0.028603193406015633
+    },
+    {
+      "step": 725,
+      "epoch": 3,
+      "loss": 0.05381776925176382
+    },
+    {
+      "step": 750,
+      "epoch": 3,
+      "loss": 0.06410078478977084
+    },
+    {
+      "step": 775,
+      "epoch": 3,
+      "loss": 0.023961194176226854
+    },
+    {
+      "step": 800,
+      "epoch": 3,
+      "loss": 0.0360759255848825
+    },
+    {
+      "step": 825,
+      "epoch": 3,
+      "loss": 0.024714151825755835
+    },
+    {
+      "step": 850,
+      "epoch": 3,
+      "loss": 0.05081680332310498
+    },
+    {
+      "step": 875,
+      "epoch": 3,
+      "loss": 0.016790458178147675
+    },
+    {
+      "step": 900,
+      "epoch": 3,
+      "loss": 0.014746179096400738
+    },
+    {
+      "step": 925,
+      "epoch": 3,
+      "loss": 0.02522713384591043
+    },
+    {
+      "step": 939,
+      "epoch": 3,
+      "loss": 0.030337321505482708
+    }
+  ],
+  "test_batch_size": 1,
+  "latency": "tokenise, forward pass and softmax for one message, batch 1, bf16 autocast",
+  "adapter_dir": "artifacts/models/modernbert-base-full",
+  "hardware": {
+    "cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
+    "logical_cpus": 4,
+    "torch_threads": 2,
+    "torch": "2.14.0+cpu",
+    "python": "3.11.16",
+    "load_average_1m": 2.01
+  }
+}

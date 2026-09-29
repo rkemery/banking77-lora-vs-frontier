@@ -117,6 +117,87 @@
       "train_cost_usd": 0.07850505555555555,
       "train_on": "local"
     },
+    "gpt-6-luna-zeroshot": {
+      "run_id": "gpt-6-luna-zeroshot",
+      "n": 3080,
+      "accuracy": 0.8548701298701299,
+      "accuracy_ci": [
+        0.8422077922077922,
+        0.8672077922077922
+      ],
+      "macro_f1": 0.8507966224460477,
+      "macro_f1_ci": [
+        0.8370104734964485,
+        0.8615536950236359
+      ],
+      "dedup_n": 2662,
+      "dedup_accuracy": 0.8448534936138242,
+      "dedup_accuracy_ci": [
+        0.830954169797145,
+        0.8580015026296018
+      ],
+      "ece": null,
+      "errors": 0,
+      "invalid": 0,
+      "cost_per_1k_usd": 0.027166220779220786,
+      "total_cost_usd": 0.08367196000000002,
+      "latency_p50_ms": 1339.469,
+      "latency_p95_ms": 3220.239299999999
+    },
+    "gpt-6-luna-fewshot-k20": {
+      "run_id": "gpt-6-luna-fewshot-k20",
+      "n": 3080,
+      "accuracy": 0.9431818181818182,
+      "accuracy_ci": [
+        0.935064935064935,
+        0.9512987012987013
+      ],
+      "macro_f1": 0.9431079351777972,
+      "macro_f1_ci": [
+        0.9342140391246593,
+        0.9503564055484712
+      ],
+      "dedup_n": 2662,
+      "dedup_accuracy": 0.935762584522915,
+      "dedup_accuracy_ci": [
+        0.9263711495116453,
+        0.944778362133734
+      ],
+      "ece": null,
+      "errors": 0,
+      "invalid": 0,
+      "cost_per_1k_usd": 0.07134289610389609,
+      "total_cost_usd": 0.21973611999999998,
+      "latency_p50_ms": 1357.9935,
+      "latency_p95_ms": 3339.0671999999986
+    },
+    "gpt-6-sol-fewshot-k20": {
+      "run_id": "gpt-6-sol-fewshot-k20",
+      "n": 3080,
+      "accuracy": 0.9503246753246753,
+      "accuracy_ci": [
+        0.9425324675324676,
+        0.9577922077922078
+      ],
+      "macro_f1": 0.9502540006909188,
+      "macro_f1_ci": [
+        0.9418613671433712,
+        0.9572077752106827
+      ],
+      "dedup_n": 2662,
+      "dedup_accuracy": 0.9429000751314801,
+      "dedup_accuracy_ci": [
+        0.9342505634861007,
+        0.9515401953418482
+      ],
+      "ece": null,
+      "errors": 0,
+      "invalid": 0,
+      "cost_per_1k_usd": 1.4278671428571394,
+      "total_cost_usd": 4.39783079999999,
+      "latency_p50_ms": 1704.4745,
+      "latency_p95_ms": 3588.9976999999985
+    },
     "qwen3-8b-qlora-r16-s0": {
       "run_id": "qwen3-8b-qlora-r16-s0",
       "n": 3080,

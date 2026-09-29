@@ -14,9 +14,9 @@ Every arm is scored on the same 3,080 test messages with accuracy, macro-F1, pai
 | kNN vote over the same 20 retrieved neighbours | 92.2% (91.3 to 93.2) | 92.2% (91.2 to 93.1) | 91.3% (90.2 to 92.4) | 0.039 | 19 / 27 ms (CPU, batch 1) | $0.0011 |
 | ModernBERT-base, full fine-tune | 93.9% (93.0 to 94.7) | 93.9% (92.9 to 94.7) | 93.1% (92.0 to 94.0) | 0.020 | 52 / 59 ms (CPU, batch 1) | $0.0030 |
 | Qwen3-0.6B-Base + LoRA r16, classification head | 93.8% (93.0 to 94.6) | 93.8% (92.9 to 94.6) | 92.9% (92.0 to 93.9) | 0.031 | 105 / 131 ms (CPU, batch 1) | $0.0061 |
-| gpt-6-luna zero-shot, label descriptions | pending live run: `make prompt-luna-zeroshot` | | | | | |
-| gpt-6-luna, 20 retrieved examples | pending live run: `make prompt-luna-fewshot` | | | | | |
-| gpt-6-sol, 20 retrieved examples | pending live run: `make prompt-sol-fewshot` | | | | | |
+| gpt-6-luna zero-shot, label descriptions | 85.5% (84.2 to 86.7) | 85.1% (83.7 to 86.2) | 84.5% (83.1 to 85.8) | n/a (no logprobs) | 1339 / 3220 ms | $0.0272 |
+| gpt-6-luna, 20 retrieved examples | 94.3% (93.5 to 95.1) | 94.3% (93.4 to 95.0) | 93.6% (92.6 to 94.5) | n/a (no logprobs) | 1358 / 3339 ms | $0.0713 |
+| gpt-6-sol, 20 retrieved examples | 95.0% (94.3 to 95.8) | 95.0% (94.2 to 95.7) | 94.3% (93.4 to 95.2) | n/a (no logprobs) | 1704 / 3589 ms | $1.43 |
 | Qwen3-8B-Base QLoRA r16 (one A10G, Hugging Face Jobs) | 94.6% (93.8 to 95.4) | 94.6% (93.7 to 95.3) | 93.9% (93.0 to 94.7) | 0.026 | 112 / 124 ms (A10G GPU, batch 1) | $0.0473 |
 
 n = 3,080 test items (40 per class) for every row. CIs are percentile bootstraps over items (10,000 resamples). The dedup column drops the 418 test items whose nearest training message has the same label at character n-gram cosine >= 0.90. ECE is top-label expected calibration error with 15 bins (the kNN row's confidence is its winning vote share, not a probability). API latency is one request over the network and API cost is from measured token usage at list price. Local CPU cost assumes one Azure D4s v6 VM (4 vCPU, 16 GiB, 5th gen Xeon with AMX, the same CPU class these runs used) at the $0.202/hour Linux pay-as-you-go list price in East US 2 (Azure Retail Prices API, 2026-09-28), serving one message at a time with no batching and no idle time. The GPU row uses the Hugging Face Jobs a10g-large list price its run recorded ($1.50/hour, huggingface.co/docs/hub/jobs-pricing, 2026-09-28) on the same one-message-at-a-time basis.
@@ -26,7 +26,13 @@ Local latency depends on how busy the machine was (load 4 means all 4 cores busy
 - `logreg-bge-small` trained in 2 seconds on the CPU (about $0.0001 at the VM price above).
 - `modernbert-base-full` trained in 14.6 minutes on the CPU (about $0.0491 at the VM price above).
 - `qwen3-0.6b-lora-r16-s0` trained in 23.3 minutes on the CPU (about $0.0785 at the VM price above).
+- `gpt-6-luna-zeroshot` cost $0.08 for 3,080 calls at list price, with 0 failed calls and 0 invalid labels.
+- `gpt-6-luna-fewshot-k20` cost $0.22 for 3,080 calls at list price, with 0 failed calls and 0 invalid labels.
+- `gpt-6-sol-fewshot-k20` cost $4.40 for 3,080 calls at list price, with 0 failed calls and 0 invalid labels.
 - `qwen3-8b-qlora-r16-s0` trained in 22.1 minutes on one A10G (about $0.5513 at the job's list price).
+- qwen3-0.6b-lora-r16-s0 is 1.2 points below gpt-6-sol-fewshot-k20 at 1/235 of its cost per prediction (API list price vs CPU time at the price below, training cost excluded).
+- qwen3-0.6b-lora-r16-s0 is 0.5 points below gpt-6-luna-fewshot-k20 at 1/12 of its cost per prediction (API list price vs CPU time at the price below, training cost excluded).
+- qwen3-0.6b-lora-r16-s0 is 8.3 points above gpt-6-luna-zeroshot at 1/4 of its cost per prediction (API list price vs CPU time at the price below, training cost excluded).
 
 **Paired comparisons** on the same 3,080 items (accuracy, candidate minus baseline). CI from a paired bootstrap, p from the exact McNemar test, MDE is the smallest difference this pair could detect with 80% power (harness `stats`).
 
@@ -35,12 +41,12 @@ Local latency depends on how busy the machine was (load 4 means all 4 cores busy
 | logreg-bge-small | knn-bge-small-k20 | 93.4% | 92.2% | -1.2 pts (-1.9 to -0.5) | 0.002 | 83 / 47 | 1.1 pts | 3,080 |
 | logreg-bge-small | modernbert-base-full | 93.4% | 93.9% | +0.5 pts (-0.3 to +1.2) | 0.238 | 63 / 78 | 1.1 pts | 3,080 |
 | modernbert-base-full | qwen3-0.6b-lora-r16-s0 | 93.9% | 93.8% | -0.1 pts (-0.8 to +0.7) | 0.934 | 74 / 72 | 1.1 pts | 3,080 |
-| qwen3-0.6b-lora-r16-s0 | gpt-6-luna-zeroshot | pending | | | | | | |
-| qwen3-0.6b-lora-r16-s0 | gpt-6-luna-fewshot-k20 | pending | | | | | | |
-| qwen3-0.6b-lora-r16-s0 | gpt-6-sol-fewshot-k20 | pending | | | | | | |
-| knn-bge-small-k20 | gpt-6-luna-fewshot-k20 | pending | | | | | | |
-| gpt-6-luna-zeroshot | gpt-6-luna-fewshot-k20 | pending | | | | | | |
-| gpt-6-luna-fewshot-k20 | gpt-6-sol-fewshot-k20 | pending | | | | | | |
+| qwen3-0.6b-lora-r16-s0 | gpt-6-luna-zeroshot | 93.8% | 85.5% | -8.3 pts (-9.6 to -7.1) | <0.001 | 325 / 68 | 1.8 pts | 3,080 |
+| qwen3-0.6b-lora-r16-s0 | gpt-6-luna-fewshot-k20 | 93.8% | 94.3% | +0.5 pts (-0.3 to +1.3) | 0.251 | 67 / 82 | 1.1 pts | 3,080 |
+| qwen3-0.6b-lora-r16-s0 | gpt-6-sol-fewshot-k20 | 93.8% | 95.0% | +1.2 pts (+0.5 to +1.9) | 0.001 | 45 / 82 | 1.0 pts | 3,080 |
+| knn-bge-small-k20 | gpt-6-luna-fewshot-k20 | 92.2% | 94.3% | +2.1 pts (+1.3 to +2.9) | <0.001 | 50 / 114 | 1.2 pts | 3,080 |
+| gpt-6-luna-zeroshot | gpt-6-luna-fewshot-k20 | 85.5% | 94.3% | +8.8 pts (+7.8 to +9.9) | <0.001 | 15 / 287 | 1.6 pts | 3,080 |
+| gpt-6-luna-fewshot-k20 | gpt-6-sol-fewshot-k20 | 94.3% | 95.0% | +0.7 pts (+0.2 to +1.2) | 0.008 | 21 / 43 | 0.7 pts | 3,080 |
 
 **Learning curve** (accuracy on the full test set). Subsets are nested across k and drawn from train minus dev.
 

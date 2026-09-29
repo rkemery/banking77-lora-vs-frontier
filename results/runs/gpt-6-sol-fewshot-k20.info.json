@@ -1,0 +1,15 @@
+{
+  "run_id": "gpt-6-sol-fewshot-k20",
+  "config": "sol-fewshot",
+  "model": "gpt-6-sol",
+  "arm": "sol-fewshot",
+  "few_shot_k": 20,
+  "max_output_tokens": 32,
+  "reasoning_effort": "none",
+  "cap_usd": 20.0,
+  "spent_usd_per_cap": 4.390912,
+  "charged_for_errors_usd": 0.0,
+  "cost_basis": "list price from measured usage (harness DEFAULT_PRICES, 2026-09-28)",
+  "latency": "one Responses API call over the network, measured by the client",
+  "fake": false
+}

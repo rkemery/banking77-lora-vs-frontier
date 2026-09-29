@@ -551,29 +551,22 @@ def headline(summary: dict[str, Any]) -> str:
         return f"{100 * be[pair]['utilization']:.1f}%"
 
     s6, lf6, q86 = pairs[(Q06, sol)], pairs[(Q06, lf)], pairs[(Q06, q8)]
-    k0 = k_small[0]
     return (
         f"**The short answer.** gpt-6-sol with 20 retrieved examples beats the Qwen3-0.6B LoRA "
         f"by {100 * s6['diff']:.1f} points ({pct(s6['candidate_accuracy'])} vs "
         f"{pct(s6['baseline_accuracy'])}, McNemar p={_fmt_p(s6['p'])}, Holm-adjusted "
-        f"{_fmt_p(s6['holm_p'])} in the primary family). gpt-6-luna with the same examples "
-        f"can't be separated from the 0.6B (p={_fmt_p(lf6['p'])}), and the 0.6B is at most "
-        f"{at_most((Q06, lf))} points below it, going by the upper end of the paired 95% CI. "
-        f"Neither can the Qwen3-8B QLoRA once you correct for multiple comparisons: its "
-        f"{100 * q86['diff']:.1f}-point lead over the 0.6B has p={_fmt_p(q86['p'])}, and "
-        f"Holm over the secondary pairs makes that {_fmt_p(q86['holm_p_secondary'])}. "
-        f"The cheapest arm holds up too. Logistic regression on frozen bge-small embeddings "
-        f"({fmt_cost(arms_[lr]['cost_per_1k_usd'])} per 1k predictions, "
-        f"{arms_[lr]['train_minutes'] * 60:.0f} seconds to train) is at most "
-        f"{at_most((lr, Q06))} points below the 0.6B LoRA and {at_most((lr, mb))} below "
-        f"ModernBERT on the full training set, and it beats this LoRA recipe at "
-        f"{', '.join(k_small[:-1])} and {k_small[-1]} examples per class "
-        f"({pct(curve[k0]['logreg'])} vs {pct(curve[k0]['lora'])} at {k0}). sol costs about "
-        f"{arms_[sol]['cost_per_1k_usd'] / arms_[lf]['cost_per_1k_usd']:.0f}x luna few-shot "
-        f"per prediction. Whether a local model is cheaper than the API depends on how busy it "
-        f"stays: the 0.6B's CPU box beats luna few-shot above {util((Q06, lf))} utilization "
-        f"and sol above {util((Q06, sol))}, and the 8B on an A10G beats luna few-shot only "
-        f"above {util((q8, lf))}."
+        f"{_fmt_p(s6['holm_p'])}), at about "
+        f"{arms_[sol]['cost_per_1k_usd'] / arms_[lf]['cost_per_1k_usd']:.0f}x the "
+        f"per-prediction cost of gpt-6-luna with the same examples. Neither luna few-shot "
+        f"(p={_fmt_p(lf6['p'])}) nor the Qwen3-8B QLoRA (p={_fmt_p(q86['p'])}, "
+        f"{_fmt_p(q86['holm_p_secondary'])} after Holm) can be separated from the 0.6B, and "
+        f"logistic regression on frozen bge-small embeddings "
+        f"({fmt_cost(arms_[lr]['cost_per_1k_usd'])} per 1k, "
+        f"{arms_[lr]['train_minutes'] * 60:.0f} s to train) is at most {at_most((lr, Q06))} "
+        f"points below it and beats it at {k_small[0]} to {k_small[-1]} examples per class. "
+        f"A local model is only cheaper than the API while it stays busy: above "
+        f"{util((Q06, lf))} utilization for the 0.6B's CPU box and {util((q8, lf))} for the "
+        f"8B's A10G, both against luna few-shot."
     )
 
 
@@ -701,7 +694,7 @@ def build(runs_dir: Path = RUNS_DIR) -> tuple[str, dict[str, Any]]:
         "them. The primary family is {0.6B LoRA, 8B QLoRA} x {luna few-shot, sol few-shot}, "
         "the four pairs that answer this repo's question, with Holm-adjusted p in the last "
         "column. It was named after the results were in. The other pairs are secondary and "
-        "their p-values are unadjusted.",
+        "their p-values are unadjusted in the table.",
         "",
         *paired_rows(comps),
         "",

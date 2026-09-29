@@ -13,7 +13,9 @@ Choices and where they come from:
   the ModernBERT authors swept for GLUE (lr 1e-5 to 8e-5, 1 to 3 epochs for
   SST-2, MNLI and RTE, Warner et al. 2024, arXiv 2412.13663, appendix).
   Batch 32, weight decay 0.01. Not swept here, to save CPU time.
-- Epochs are fixed in advance, not picked on test.
+- Epochs are fixed in advance, not picked on test: 2 for the sweep and the final
+  LoRA run, 3 for ModernBERT, and 10 for the learning-curve LoRA runs (250 steps
+  at 5 per class, the same as one sweep run).
 """
 
 from __future__ import annotations

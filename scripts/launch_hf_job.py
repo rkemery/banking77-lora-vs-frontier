@@ -7,8 +7,8 @@
 Needs HF_TOKEN in the environment and a positive Hugging Face credit balance.
 The job timeout is the spending cap: flavor price x timeout.
 
-    uv run scripts/launch_hf_job.py start --lr 1e-4 --smoke   # a few cents
-    uv run scripts/launch_hf_job.py start --lr 1e-4           # the real run
+    uv run scripts/launch_hf_job.py start --lr 3e-4 --smoke   # a few cents
+    uv run scripts/launch_hf_job.py start --lr 3e-4           # the real run (the sweep's lr)
     uv run scripts/launch_hf_job.py logs <job_id>
     uv run scripts/launch_hf_job.py fetch                     # results into artifacts/hf-job/
 """

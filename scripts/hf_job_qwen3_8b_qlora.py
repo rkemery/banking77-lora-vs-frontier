@@ -15,6 +15,9 @@
 Same recipe as the CPU LoRA run (classification head, LoRA r16 alpha 32 on every
 linear layer, all 10,003 training messages, 2 epochs, bf16), with the base model
 in 4-bit NF4 (QLoRA, Dettmers et al. 2023, arXiv 2305.14314) so it fits in 24 GB.
+Two differences from the CPU run: batches come in random order, not length-grouped,
+and the parquet files come from the pinned revision without the sha256 check that
+`b77.data` does.
 Test predictions are made one message at a time, so latency is batch-1 like the
 CPU rows. Writes to --out:
 

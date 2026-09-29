@@ -7,7 +7,7 @@ import pytest
 from llm_eval_harness.report import replace_section
 
 from b77 import plan
-from b77.report import build, results_table
+from b77.report import build, headline, holm, results_table
 from b77.runs import Prediction, write_run
 from b77.splits import read_splits
 
@@ -49,9 +49,12 @@ def test_report_shows_real_rows_and_pending_rows(tmp_path: Path) -> None:
     assert qwen["n"] == 3080
     assert qwen["dedup_n"] == read_splits()["test_dedup"]["kept"]
     assert qwen["accuracy_ci"][0] < qwen["accuracy"] < qwen["accuracy_ci"][1]
-    # The LoRA vs luna few-shot pair exists, so it gets a McNemar row and a framing line.
+    # The LoRA vs luna few-shot pair exists, so it gets a McNemar row and a break-even line.
     assert f"| {plan.RUN_QWEN_FINAL.format(seed=0)} | {plan.RUN_LUNA_FEW} | 9" in body
-    assert "points above gpt-6-luna-fewshot-k20" in body
+    assert "| primary (" in body
+    assert f"vs `{plan.RUN_LUNA_FEW}` ($0.20): cheaper above" in body
+    # Too few runs for the headline, so it says so instead of printing half the numbers.
+    assert "once every arm has run" in headline(summary)
     # API cost per 1k is the mean record cost times 1,000.
     assert summary["arms"][plan.RUN_LUNA_FEW]["cost_per_1k_usd"] == pytest.approx(0.2)
     assert ";" not in body.replace("&", "")
@@ -65,8 +68,15 @@ def test_all_pending_table_has_a_row_per_arm() -> None:
     assert "n=2,662" in table
 
 
+def test_holm_matches_a_hand_computed_example() -> None:
+    # Sorted p 0.01, 0.02, 0.04 times 3, 2, 1 is 0.03, 0.04, 0.04 (kept monotone).
+    assert holm([0.04, 0.01, 0.02]) == pytest.approx([0.04, 0.03, 0.04])
+    assert holm([0.5, 0.9]) == pytest.approx([1.0, 1.0])
+
+
 def test_committed_readme_section_is_current() -> None:
     """`make demo` must have been run after the last change to results/."""
     readme = Path("README.md").read_text(encoding="utf-8")
-    body, _ = build()
+    body, summary = build()
     assert replace_section(readme, "results", body) == readme
+    assert replace_section(readme, "headline", headline(summary)) == readme

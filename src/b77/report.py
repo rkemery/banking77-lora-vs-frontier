@@ -210,28 +210,52 @@ def results_table(rows: list[tuple[ArmSpec, dict[str, Any] | None]], dedup_n: in
     return "\n".join(lines)
 
 
-PAIRS: list[tuple[str, str]] = [
+Q06 = plan.RUN_QWEN_FINAL.format(seed=0)
+
+# The primary family answers the repo's question, fine-tuned local model vs retrieval-augmented
+# prompting: {0.6B, 8B} x {luna few-shot, sol few-shot}. It was named after the results were in.
+PRIMARY_PAIRS: list[tuple[str, str]] = [
+    (Q06, plan.RUN_LUNA_FEW),
+    (Q06, plan.RUN_SOL_FEW),
+    (plan.RUN_QWEN8B, plan.RUN_LUNA_FEW),
+    (plan.RUN_QWEN8B, plan.RUN_SOL_FEW),
+]
+SECONDARY_PAIRS: list[tuple[str, str]] = [
     (plan.RUN_LOGREG, plan.RUN_KNN),
     (plan.RUN_LOGREG, plan.RUN_MODERNBERT),
-    (plan.RUN_MODERNBERT, plan.RUN_QWEN_FINAL.format(seed=0)),
-    (plan.RUN_QWEN_FINAL.format(seed=0), plan.RUN_LUNA_ZERO),
-    (plan.RUN_QWEN_FINAL.format(seed=0), plan.RUN_LUNA_FEW),
-    (plan.RUN_QWEN_FINAL.format(seed=0), plan.RUN_SOL_FEW),
+    (plan.RUN_LOGREG, Q06),
+    (plan.RUN_LOGREG, plan.RUN_QWEN8B),
+    (plan.RUN_MODERNBERT, Q06),
+    (Q06, plan.RUN_QWEN8B),
+    (Q06, plan.RUN_LUNA_ZERO),
+    (plan.RUN_QWEN8B, plan.RUN_LUNA_ZERO),
     (plan.RUN_KNN, plan.RUN_LUNA_FEW),
     (plan.RUN_LUNA_ZERO, plan.RUN_LUNA_FEW),
     (plan.RUN_LUNA_FEW, plan.RUN_SOL_FEW),
 ]
+PAIRS: list[tuple[str, str]] = PRIMARY_PAIRS + SECONDARY_PAIRS
 
 
-def paired_rows(runs: dict[str, Run]) -> list[str]:
-    lines = [
-        "| Baseline | Candidate | Baseline acc. | Candidate acc. | Difference (95% CI) "
-        "| McNemar p | Discordant (base only / cand. only) | MDE | n |",
-        "|---|---|---|---|---|---|---|---|---|",
-    ]
+def holm(pvalues: list[float]) -> list[float]:
+    """Holm step-down adjusted p-values, returned in the input order."""
+    m = len(pvalues)
+    adjusted = [0.0] * m
+    running = 0.0
+    for rank, i in enumerate(sorted(range(m), key=lambda j: pvalues[j])):
+        running = max(running, min(1.0, (m - rank) * pvalues[i]))
+        adjusted[i] = running
+    return adjusted
+
+
+def compare_pairs(runs: dict[str, Run]) -> dict[tuple[str, str], dict[str, Any]]:
+    """Paired bootstrap CI and exact McNemar for every pair in PAIRS whose runs both exist.
+
+    Adds Holm-adjusted p within the primary family, within the secondary pairs, and over
+    every pair at once, so the report can show the conclusions don't hinge on the family.
+    """
+    out: dict[tuple[str, str], dict[str, Any]] = {}
     for base_id, cand_id in PAIRS:
         if base_id not in runs or cand_id not in runs:
-            lines.append(f"| {base_id} | {cand_id} | pending | | | | | | |")
             continue
         base, cand = runs[base_id], runs[cand_id]
         ids = base.item_ids
@@ -242,27 +266,87 @@ def paired_rows(runs: dict[str, Run]) -> list[str]:
         comp = paired_bootstrap(bp == bg, cp == cg, seed=0)
         assert comp.mcnemar is not None
         rate = comp.mcnemar.discordant / comp.n
-        mde = mde_paired_binary(comp.n, rate) if rate > 0 else None
-        p = comp.pvalue if comp.pvalue is not None else float("nan")
+        out[(base_id, cand_id)] = {
+            "baseline": base_id,
+            "candidate": cand_id,
+            "family": "primary" if (base_id, cand_id) in PRIMARY_PAIRS else "secondary",
+            "n": comp.n,
+            "baseline_accuracy": comp.baseline_mean,
+            "candidate_accuracy": comp.candidate_mean,
+            "diff": comp.diff,
+            "diff_ci": [comp.low, comp.high],
+            "p": comp.pvalue if comp.pvalue is not None else float("nan"),
+            "base_only": comp.mcnemar.a_only,
+            "cand_only": comp.mcnemar.b_only,
+            "mde": mde_paired_binary(comp.n, rate) if rate > 0 else None,
+        }
+    for key, family in (("holm_p", "primary"), ("holm_p_secondary", "secondary")):
+        members = [c for c in out.values() if c["family"] == family]
+        for c, adj in zip(members, holm([c["p"] for c in members]), strict=True):
+            c[key] = adj
+    for c, adj in zip(out.values(), holm([c["p"] for c in out.values()]), strict=True):
+        c["holm_p_all"] = adj
+    return out
+
+
+def paired_rows(comps: dict[tuple[str, str], dict[str, Any]]) -> list[str]:
+    lines = [
+        "| Baseline | Candidate | Baseline acc. | Candidate acc. | Difference (95% CI) "
+        "| McNemar p | Discordant (base only / cand. only) | MDE | n | Family (Holm p) |",
+        "|---|---|---|---|---|---|---|---|---|---|",
+    ]
+    for pair in PAIRS:
+        if pair not in comps:
+            lines.append(f"| {pair[0]} | {pair[1]} | pending | | | | | | | |")
+            continue
+        c = comps[pair]
+        low, high = c["diff_ci"]
+        family = f"primary ({_fmt_p(c['holm_p'])})" if "holm_p" in c else "secondary"
+        mde = "n/a" if c["mde"] is None else f"{100 * c['mde']:.1f} pts"
         lines.append(
-            f"| {base_id} | {cand_id} | {pct(comp.baseline_mean)} | {pct(comp.candidate_mean)} "
-            f"| {100 * comp.diff:+.1f} pts ({100 * comp.low:+.1f} to {100 * comp.high:+.1f}) "
-            f"| {_fmt_p(p)} | {comp.mcnemar.a_only} / {comp.mcnemar.b_only} "
-            f"| {'n/a' if mde is None else f'{100 * mde:.1f} pts'} | {comp.n:,} |"
+            f"| {c['baseline']} | {c['candidate']} | {pct(c['baseline_accuracy'])} "
+            f"| {pct(c['candidate_accuracy'])} "
+            f"| {100 * c['diff']:+.1f} pts ({100 * low:+.1f} to {100 * high:+.1f}) "
+            f"| {_fmt_p(c['p'])} | {c['base_only']} / {c['cand_only']} "
+            f"| {mde} | {c['n']:,} | {family} |"
         )
     return lines
+
+
+def family_lines(comps: dict[tuple[str, str], dict[str, Any]]) -> list[str]:
+    """How the primary result holds up when the family changes."""
+    primary = [comps[p] for p in PRIMARY_PAIRS if p in comps]
+    if len(primary) < len(PRIMARY_PAIRS):
+        return []
+    parts = [f"{c['baseline']} vs {c['candidate']} {_fmt_p(c['holm_p_all'])}" for c in primary]
+    same = all((c["holm_p"] < 0.05) == (c["holm_p_all"] < 0.05) for c in primary)
+    lines = [
+        f"Holm over all {len(comps)} pairs at once gives the primary pairs "
+        + ", ".join(parts)
+        + (
+            ". The same pairs clear 0.05 either way, so the conclusions don't depend on which "
+            "family is named."
+            if same
+            else ". Some primary pairs change sides at 0.05 under the wider family."
+        )
+    ]
+    lf_sol = comps.get((plan.RUN_LUNA_FEW, plan.RUN_SOL_FEW))
+    if lf_sol is not None:
+        lines.append(
+            f"sol over luna few-shot (p={_fmt_p(lf_sol['p'])}) is suggestive only: Holm gives "
+            f"{_fmt_p(lf_sol['holm_p_secondary'])} over the secondary pairs and "
+            f"{_fmt_p(lf_sol['holm_p_all'])} over all of them."
+        )
+    return [" ".join(lines)]
 
 
 def _fmt_p(p: float) -> str:
     return "<0.001" if p < 0.001 else f"{p:.3f}"
 
 
-def curve_table(runs_dir: Path, full: dict[str, dict[str, Any]]) -> str:
-    lines = [
-        "| Examples per class | Train size | LogReg on bge-small (mean of 3 draws, sd) "
-        "| Qwen3-0.6B LoRA (draw 0) |",
-        "|---|---|---|---|",
-    ]
+def curve_data(runs_dir: Path) -> dict[int, dict[str, Any]]:
+    """Learning-curve accuracies per k: logreg over its draws, LoRA for draw 0."""
+    out: dict[int, dict[str, Any]] = {}
     for k in LEARNING_CURVE_K:
         accs = []
         for seed in LEARNING_CURVE_SEEDS:
@@ -270,19 +354,35 @@ def curve_table(runs_dir: Path, full: dict[str, dict[str, Any]]) -> str:
             if run_exists(rid, runs_dir):
                 g, p = load_run(rid, runs_dir).arrays()
                 accs.append(float(np.mean(g == p)))
+        row: dict[str, Any] = {"logreg": None, "logreg_sd": None, "lora": None}
         if len(accs) == len(LEARNING_CURVE_SEEDS):
-            lr_cell = f"{pct(float(np.mean(accs)))} (sd {100 * float(np.std(accs, ddof=1)):.1f})"
-        else:
-            lr_cell = "pending: `make baselines`"
+            row["logreg"] = float(np.mean(accs))
+            row["logreg_sd"] = float(np.std(accs, ddof=1))
         qid = plan.run_qwen_curve(k, 0)
         if run_exists(qid, runs_dir):
             g, p = load_run(qid, runs_dir).arrays()
-            q_cell = pct(float(np.mean(g == p)))
+            row["lora"] = float(np.mean(g == p))
+        out[k] = row
+    return out
+
+
+def curve_table(curve: dict[int, dict[str, Any]], full: dict[str, dict[str, Any]]) -> str:
+    lines = [
+        "| Examples per class | Train size | LogReg on bge-small (mean of 3 draws, sd) "
+        "| Qwen3-0.6B LoRA (draw 0) |",
+        "|---|---|---|---|",
+    ]
+    for k, row in curve.items():
+        if row["logreg"] is None:
+            lr_cell = "pending: `make baselines`"
         else:
-            q_cell = "pending CPU run: `make learning-curve`"
+            lr_cell = f"{pct(row['logreg'])} (sd {100 * row['logreg_sd']:.1f})"
+        q_cell = "pending CPU run: `make learning-curve`"
+        if row["lora"] is not None:
+            q_cell = pct(row["lora"])
         lines.append(f"| {k} | {77 * k:,} | {lr_cell} | {q_cell} |")
     lr_full = full.get(plan.RUN_LOGREG)
-    q_full = full.get(plan.RUN_QWEN_FINAL.format(seed=0))
+    q_full = full.get(Q06)
     lr_cell = f"{pct(lr_full['accuracy'])} (one fit)" if lr_full else "pending"
     q_cell = pct(q_full["accuracy"]) if q_full else "pending"
     lines.append(f"| all (about 130) | {plan.N_TRAIN:,} | {lr_cell} | {q_cell} |")
@@ -292,6 +392,7 @@ def curve_table(runs_dir: Path, full: dict[str, dict[str, Any]]) -> str:
 def conditions_line(runs: dict[str, Run]) -> list[str]:
     """How busy the CPU was when each local run's latency was measured."""
     parts = []
+    loaded = []
     for run_id, run in runs.items():
         hw = run.info.get("hardware")
         if not hw or "gpu" in hw:
@@ -300,13 +401,21 @@ def conditions_line(runs: dict[str, Run]) -> list[str]:
         threads = embed.get("torch_threads", hw.get("torch_threads"))
         load = embed.get("load_average_1m", hw.get("load_average_1m"))
         parts.append(f"`{run_id}` with {threads} torch thread(s) at load {load}")
+        if load is not None and load > hw.get("logical_cpus", 4):
+            loaded.append(f"`{run_id}`")
     if not parts:
         return []
-    return [
-        "Local latency depends on how busy the machine was (load 4 means all 4 cores busy): "
-        + ", ".join(parts)
-        + "."
-    ]
+    line = (
+        "Local latency depends on how busy the machine was (load 4 means all 4 vCPUs busy, "
+        "and the D4s v6 has 2 physical cores under them): " + ", ".join(parts) + "."
+    )
+    if loaded:
+        line += (
+            f" {' and '.join(loaded)} {'was' if len(loaded) == 1 else 'were'} timed on a "
+            "shared machine with more work queued than it had vCPUs, not the idle D4s v6, but "
+            "priced at the D4s v6 rate, so their latency and cost are upper bounds."
+        )
+    return [line]
 
 
 def spend_lines(full: dict[str, dict[str, Any]]) -> list[str]:
@@ -335,24 +444,137 @@ def spend_lines(full: dict[str, dict[str, Any]]) -> list[str]:
     return lines
 
 
-def framing_lines(full: dict[str, dict[str, Any]]) -> list[str]:
-    """'Within X points at 1/Y the cost' sentences, only for pairs that both exist."""
-    lines = []
-    qwen = full.get(plan.RUN_QWEN_FINAL.format(seed=0))
-    for api_id in (plan.RUN_SOL_FEW, plan.RUN_LUNA_FEW, plan.RUN_LUNA_ZERO):
-        api = full.get(api_id)
-        for local_id, local in ((plan.RUN_QWEN_FINAL.format(seed=0), qwen),):
-            if api is None or local is None:
-                continue
-            gap = 100 * (local["accuracy"] - api["accuracy"])
-            ratio = api["cost_per_1k_usd"] / local["cost_per_1k_usd"]
-            side = "above" if gap >= 0 else "below"
-            lines.append(
-                f"- {local_id} is {abs(gap):.1f} points {side} {api_id} at 1/{ratio:.0f} of its "
-                "cost per prediction (API list price vs CPU time at the price below, "
-                "training cost excluded)."
-            )
+BREAK_EVEN_PAIRS: list[tuple[str, str]] = [
+    (Q06, plan.RUN_LUNA_FEW),
+    (Q06, plan.RUN_SOL_FEW),
+    (plan.RUN_QWEN8B, plan.RUN_LUNA_FEW),
+    (plan.RUN_QWEN8B, plan.RUN_SOL_FEW),
+]
+
+
+def break_even(full: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    """The share of the time a local box must be busy to cost less per prediction than an API.
+
+    A rented box costs the same per hour busy or idle, and the API bills per call. The
+    per-1k local cost assumes the box is busy all the time, so at utilization u it is
+    cost / u, and it matches the API at u = local cost / API cost.
+    """
+    out = []
+    for local_id, api_id in BREAK_EVEN_PAIRS:
+        local, api = full.get(local_id), full.get(api_id)
+        if local is None or api is None:
+            continue
+        lc, ac = local["cost_per_1k_usd"], api["cost_per_1k_usd"]
+        if lc is None or ac is None or ac <= 0:
+            continue
+        out.append(
+            {
+                "local": local_id,
+                "api": api_id,
+                "local_on": "A10G" if local.get("train_on") == "gpu" else "CPU",
+                "local_cost_per_1k_usd": lc,
+                "api_cost_per_1k_usd": ac,
+                "utilization": lc / ac,
+            }
+        )
+    return out
+
+
+def break_even_lines(rows: list[dict[str, Any]]) -> list[str]:
+    if not rows:
+        return []
+    lines = [
+        "",
+        "**Break-even utilization.** The local costs above assume a box that is busy all the "
+        "time, but a rented box costs the same per hour busy or idle and the API bills only "
+        "per call. So a local arm is only cheaper per prediction while its box is busy for "
+        "more than (local cost / API cost) of the time, with hardware at the prices above and "
+        "training excluded:",
+        "",
+    ]
+    for r in rows:
+        u = r["utilization"]
+        when = f"above {100 * u:.1f}% utilization" if u < 1 else "never, even fully busy"
+        lines.append(
+            f"- `{r['local']}` ({r['local_on']}, {fmt_cost(r['local_cost_per_1k_usd'])} per 1k "
+            f"when fully busy) vs `{r['api']}` ({fmt_cost(r['api_cost_per_1k_usd'])}): "
+            f"cheaper {when}."
+        )
     return lines
+
+
+def dedup_line(full: dict[str, dict[str, Any]]) -> list[str]:
+    """How much each arm loses when the near-twin test items are dropped."""
+    drops = {rid: 100 * (m["accuracy"] - m["dedup_accuracy"]) for rid, m in full.items()}
+    if len(drops) < 2:
+        return []
+    low, high = min(drops.values()), max(drops.values())
+    if low <= 0:
+        return [f"Dedup minus full accuracy ranges from {-high:+.1f} to {-low:+.1f} points."]
+    line = f"Every arm scores {low:.1f} to {high:.1f} points lower on the dedup subset."
+    if plan.RUN_LUNA_ZERO in drops:
+        line += (
+            f" That includes `{plan.RUN_LUNA_ZERO}` ({drops[plan.RUN_LUNA_ZERO]:.1f}), which has "
+            "no training messages in its prompt, so the dropped twins are mostly easier "
+            "messages, not answers the fine-tuned models memorised."
+        )
+    return [line]
+
+
+def headline(summary: dict[str, Any]) -> str:
+    """The README's opening answer, filled from the same numbers as the results section.
+
+    The wording fits the committed results. If a rerun changes which way a comparison
+    goes, revisit the sentences here.
+    """
+    arms_ = summary["arms"]
+    pairs = {(c["baseline"], c["candidate"]): c for c in summary["paired"]}
+    be = {(r["local"], r["api"]): r for r in summary["break_even"]}
+    curve = summary["learning_curve"]
+    lr, mb, q8 = plan.RUN_LOGREG, plan.RUN_MODERNBERT, plan.RUN_QWEN8B
+    lf, sol = plan.RUN_LUNA_FEW, plan.RUN_SOL_FEW
+    needed_pairs = [(Q06, sol), (Q06, lf), (Q06, q8), (lr, Q06), (lr, mb)]
+    needed_be = [(Q06, lf), (Q06, sol), (q8, lf)]
+    k_small = [str(k) for k in LEARNING_CURVE_K]
+    if (
+        any(p not in pairs for p in needed_pairs)
+        or any(p not in be for p in needed_be)
+        or any(curve.get(k, {}).get("lora") is None for k in k_small)
+        or any(curve.get(k, {}).get("logreg") is None for k in k_small)
+    ):
+        return "The short answer goes here once every arm has run (`make demo` writes it)."
+
+    def at_most(pair: tuple[str, str]) -> str:
+        return f"{100 * pairs[pair]['diff_ci'][1]:.1f}"
+
+    def util(pair: tuple[str, str]) -> str:
+        return f"{100 * be[pair]['utilization']:.1f}%"
+
+    s6, lf6, q86 = pairs[(Q06, sol)], pairs[(Q06, lf)], pairs[(Q06, q8)]
+    k0 = k_small[0]
+    return (
+        f"**The short answer.** gpt-6-sol with 20 retrieved examples beats the Qwen3-0.6B LoRA "
+        f"by {100 * s6['diff']:.1f} points ({pct(s6['candidate_accuracy'])} vs "
+        f"{pct(s6['baseline_accuracy'])}, McNemar p={_fmt_p(s6['p'])}, Holm-adjusted "
+        f"{_fmt_p(s6['holm_p'])} in the primary family). gpt-6-luna with the same examples "
+        f"can't be separated from the 0.6B (p={_fmt_p(lf6['p'])}), and the 0.6B is at most "
+        f"{at_most((Q06, lf))} points below it, going by the upper end of the paired 95% CI. "
+        f"Neither can the Qwen3-8B QLoRA once you correct for multiple comparisons: its "
+        f"{100 * q86['diff']:.1f}-point lead over the 0.6B has p={_fmt_p(q86['p'])}, and "
+        f"Holm over the secondary pairs makes that {_fmt_p(q86['holm_p_secondary'])}. "
+        f"The cheapest arm holds up too. Logistic regression on frozen bge-small embeddings "
+        f"({fmt_cost(arms_[lr]['cost_per_1k_usd'])} per 1k predictions, "
+        f"{arms_[lr]['train_minutes'] * 60:.0f} seconds to train) is at most "
+        f"{at_most((lr, Q06))} points below the 0.6B LoRA and {at_most((lr, mb))} below "
+        f"ModernBERT on the full training set, and it beats this LoRA recipe at "
+        f"{', '.join(k_small[:-1])} and {k_small[-1]} examples per class "
+        f"({pct(curve[k0]['logreg'])} vs {pct(curve[k0]['lora'])} at {k0}). sol costs about "
+        f"{arms_[sol]['cost_per_1k_usd'] / arms_[lf]['cost_per_1k_usd']:.0f}x luna few-shot "
+        f"per prediction. Whether a local model is cheaper than the API depends on how busy it "
+        f"stays: the 0.6B's CPU box beats luna few-shot above {util((Q06, lf))} utilization "
+        f"and sol above {util((Q06, sol))}, and the 8B on an A10G beats luna few-shot only "
+        f"above {util((q8, lf))}."
+    )
 
 
 def sweep_table(path: Path = SWEEP_PATH) -> str:
@@ -396,7 +618,7 @@ def timing_lines(timing: dict[str, Any] | None) -> list[str]:
     return [
         f"Measured on {timing['cpu']} ({timing['torch_threads']} threads, "
         f"torch {timing['torch']}), load average {timing['load_average_1m_before']} before and "
-        f"{timing['load_average_1m_after']} after (4 is a fully busy machine):",
+        f"{timing['load_average_1m_after']} after (4 means all 4 vCPUs busy):",
         "",
         "| Model | Training examples/s | Inference, batch 1 (p50) | Inference, batch 64 |",
         "|---|---|---|---|",
@@ -450,6 +672,9 @@ def build(runs_dir: Path = RUNS_DIR) -> tuple[str, dict[str, Any]]:
     from b77.timing import read_timing
 
     timing = read_timing()
+    comps = compare_pairs(all_runs)
+    curve = curve_data(runs_dir)
+    be = break_even(full)
     body = [
         results_table(rows, n_dedup),
         "",
@@ -461,21 +686,34 @@ def build(runs_dir: Path = RUNS_DIR) -> tuple[str, dict[str, Any]]:
         "vote share, not a probability). API latency is one request over the network "
         "and API cost is from measured token usage at list price. " + CPU_PRICE_NOTE,
         "",
+        *dedup_line(full),
+        "",
         *conditions_line(all_runs),
         "",
         *spend_lines(full),
-        *framing_lines(full),
+        *break_even_lines(be),
         "",
         "**Paired comparisons** on the same 3,080 items (accuracy, candidate minus baseline). "
         "CI from a paired bootstrap, p from the exact McNemar test, MDE is the smallest "
-        "difference this pair could detect with 80% power (harness `stats`).",
+        "difference this pair could detect with 80% power (harness `stats`). The CIs and "
+        "p-values treat each trained model and each API run as fixed: every fine-tune here has "
+        "one seed and every API arm ran once, so seed-to-seed and run-to-run variance isn't in "
+        "them. The primary family is {0.6B LoRA, 8B QLoRA} x {luna few-shot, sol few-shot}, "
+        "the four pairs that answer this repo's question, with Holm-adjusted p in the last "
+        "column. It was named after the results were in. The other pairs are secondary and "
+        "their p-values are unadjusted.",
         "",
-        *paired_rows(all_runs),
+        *paired_rows(comps),
+        "",
+        *family_lines(comps),
         "",
         "**Learning curve** (accuracy on the full test set). Subsets are nested across k and "
-        "drawn from train minus dev.",
+        "drawn from train minus dev. The LoRA curve runs train for "
+        f"{plan.LEARNING_CURVE_EPOCHS} epochs at the sweep's learning rate, the full-data run "
+        f"for {plan.FINAL_EPOCHS[plan.QWEN]}. "
+        "See What didn't work for why this curve can't test the small-data claim.",
         "",
-        curve_table(runs_dir, full),
+        curve_table(curve, full),
         "",
         sweep_table(),
         "",
@@ -483,7 +721,13 @@ def build(runs_dir: Path = RUNS_DIR) -> tuple[str, dict[str, Any]]:
         "",
         *timing_lines(timing),
     ]
-    summary = {"arms": full, "dedup": {k: v for k, v in dedup.items() if k != "removed_ids"}}
+    summary = {
+        "arms": full,
+        "dedup": {k: v for k, v in dedup.items() if k != "removed_ids"},
+        "paired": list(comps.values()),
+        "learning_curve": {str(k): row for k, row in curve.items()},
+        "break_even": be,
+    }
     return "\n".join(body).replace("\n\n\n", "\n\n"), summary
 
 
@@ -491,4 +735,5 @@ def write_report(readme: Path = README, runs_dir: Path = RUNS_DIR) -> bool:
     body, summary = build(runs_dir)
     SUMMARY_PATH.parent.mkdir(parents=True, exist_ok=True)
     SUMMARY_PATH.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
-    return write_section(readme, "results", body)
+    changed = write_section(readme, "headline", headline(summary))
+    return write_section(readme, "results", body) or changed

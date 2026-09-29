@@ -4,7 +4,9 @@ A 0.6B open model with a LoRA classification head, trained on a small cloud CPU 
 Every arm is scored on the same 3,080 test messages with accuracy, macro-F1, paired significance tests, latency and cost per 1,000 predictions.
 
 <!-- headline:start -->
-**The short answer.** gpt-6-sol with 20 retrieved examples beats the Qwen3-0.6B LoRA by 1.2 points (95.0% vs 93.8%, McNemar p=0.001, Holm-adjusted 0.005), at about 20x the per-prediction cost of gpt-6-luna with the same examples. Neither luna few-shot (p=0.251) nor the Qwen3-8B QLoRA (p=0.040, 0.160 after Holm over the secondary pairs) can be separated from the 0.6B, and logistic regression on frozen bge-small embeddings ($0.0010 per 1k, 2 s to train) is at most 1.2 points below it and beats it at 5 to 20 examples per class. A local model is only cheaper than the API while it stays busy: above 8.5% utilization for the 0.6B's CPU box and 66.3% for the 8B's A10G, both against luna few-shot.
+- **gpt-6-sol with 20 retrieved examples beats the Qwen3-0.6B LoRA** by 1.2 points (95.0% vs 93.8% on 3,080 test messages, McNemar p=0.001, Holm-adjusted 0.005), at about 20x the per-prediction cost of gpt-6-luna with the same examples. Luna few-shot (p=0.251) and the Qwen3-8B QLoRA (p=0.040, 0.160 after Holm over the secondary pairs) can't be separated from the 0.6B.
+- **Logistic regression on frozen bge-small embeddings** costs $0.0010 per 1k predictions, trains in 2 s, and is at most 1.2 points below the 0.6B LoRA (95% CI).
+- **A local model is only cheaper than luna few-shot while it stays busy:** above 8.5% utilization for the 0.6B's CPU box and 66.3% for the 8B's A10G. One seed per model and one run per API arm.
 <!-- headline:end -->
 
 ## Results
@@ -23,28 +25,20 @@ Every arm is scored on the same 3,080 test messages with accuracy, macro-F1, pai
 | gpt-6-sol, 20 retrieved examples | 95.0% (94.3 to 95.8) | 95.0% (94.2 to 95.7) | 94.3% (93.4 to 95.2) | n/a (no logprobs) | 1704 / 3589 ms | $1.43 |
 | Qwen3-8B-Base QLoRA r16 (one A10G, Hugging Face Jobs) | 94.6% (93.8 to 95.4) | 94.6% (93.7 to 95.3) | 93.9% (93.0 to 94.7) | 0.026 | 112 / 124 ms (A10G GPU, batch 1) | $0.0473 |
 
-n = 3,080 test items (40 per class) for every row. CIs are percentile bootstraps over items (10,000 resamples). The dedup column drops the 418 test items whose nearest training message has the same label at character n-gram cosine >= 0.90. ECE is top-label expected calibration error with 15 bins (the kNN row's confidence is its winning vote share, not a probability). API latency is one request over the network and API cost is from measured token usage at list price. Local CPU cost assumes one Azure D4s v6 VM (4 vCPU, 16 GiB, 5th gen Xeon with AMX, the same CPU class these runs used) at the $0.202/hour Linux pay-as-you-go list price in East US 2 (Azure Retail Prices API, 2026-09-28), serving one message at a time with no batching and no idle time. The GPU row uses the Hugging Face Jobs a10g-large list price its run recorded ($1.50/hour, huggingface.co/docs/hub/jobs-pricing, 2026-09-28) on the same one-message-at-a-time basis.
+n = 3,080 test items (40 per class) for every row, with 95% percentile bootstrap CIs over items. The dedup column drops the 418 test items whose nearest training message has the same label at character n-gram cosine >= 0.90.
 
 Every arm scores 0.7 to 1.0 points lower on the dedup subset. That includes `gpt-6-luna-zeroshot` (1.0), which has no training messages in its prompt, so the dropped twins are mostly easier messages, not answers the fine-tuned models memorised.
 
-Local latency depends on how busy the machine was (load 4 means all 4 vCPUs busy, and the D4s v6 has 2 physical cores under them): `logreg-bge-small` with 1 torch thread(s) at load 6.91, `knn-bge-small-k20` with 1 torch thread(s) at load 6.91, `modernbert-base-full` with 2 torch thread(s) at load 2.01, `qwen3-0.6b-lora-r16-s0` with 2 torch thread(s) at load 2.0. `logreg-bge-small` and `knn-bge-small-k20` were timed on a shared machine with more work queued than it had vCPUs, not the idle D4s v6, but priced at the D4s v6 rate, so their latency and cost are upper bounds.
+**Break-even utilization.** A rented box costs the same per hour busy or idle, and the API bills per call. So a local arm is only cheaper while its box is busy for more than (local cost / API cost) of the time, training excluded.
 
-- `logreg-bge-small` trained in 2 seconds on the CPU (about $0.0001 at the VM price above).
-- `modernbert-base-full` trained in 14.6 minutes on the CPU (about $0.0491 at the VM price above).
-- `qwen3-0.6b-lora-r16-s0` trained in 23.3 minutes on the CPU (about $0.0785 at the VM price above).
-- `gpt-6-luna-zeroshot` cost $0.08 for 3,080 calls at list price, with 0 failed calls and 0 invalid labels.
-- `gpt-6-luna-fewshot-k20` cost $0.22 for 3,080 calls at list price, with 0 failed calls and 0 invalid labels.
-- `gpt-6-sol-fewshot-k20` cost $4.40 for 3,080 calls at list price, with 0 failed calls and 0 invalid labels.
-- `qwen3-8b-qlora-r16-s0` trained in 22.1 minutes on one A10G (about $0.5513 at the job's list price).
+| Local arm | Cost per 1k, fully busy | API arm | Cost per 1k | Local is cheaper |
+|---|---|---|---|---|
+| qwen3-0.6b-lora-r16-s0 (CPU) | $0.0061 | gpt-6-luna-fewshot-k20 | $0.0713 | above 8.5% utilization |
+| qwen3-0.6b-lora-r16-s0 (CPU) | $0.0061 | gpt-6-sol-fewshot-k20 | $1.43 | above 0.4% utilization |
+| qwen3-8b-qlora-r16-s0 (A10G) | $0.0473 | gpt-6-luna-fewshot-k20 | $0.0713 | above 66.3% utilization |
+| qwen3-8b-qlora-r16-s0 (A10G) | $0.0473 | gpt-6-sol-fewshot-k20 | $1.43 | above 3.3% utilization |
 
-**Break-even utilization.** The local costs above assume a box that is busy all the time, but a rented box costs the same per hour busy or idle and the API bills only per call. So a local arm is only cheaper per prediction while its box is busy for more than (local cost / API cost) of the time, with hardware at the prices above and training excluded:
-
-- `qwen3-0.6b-lora-r16-s0` (CPU, $0.0061 per 1k when fully busy) vs `gpt-6-luna-fewshot-k20` ($0.0713): cheaper above 8.5% utilization.
-- `qwen3-0.6b-lora-r16-s0` (CPU, $0.0061 per 1k when fully busy) vs `gpt-6-sol-fewshot-k20` ($1.43): cheaper above 0.4% utilization.
-- `qwen3-8b-qlora-r16-s0` (A10G, $0.0473 per 1k when fully busy) vs `gpt-6-luna-fewshot-k20` ($0.0713): cheaper above 66.3% utilization.
-- `qwen3-8b-qlora-r16-s0` (A10G, $0.0473 per 1k when fully busy) vs `gpt-6-sol-fewshot-k20` ($1.43): cheaper above 3.3% utilization.
-
-**Paired comparisons** on the same 3,080 items (accuracy, candidate minus baseline). CI from a paired bootstrap, p from the exact McNemar test, MDE is the smallest difference this pair could detect with 80% power (harness `stats`). The CIs and p-values treat each trained model and each API run as fixed: every fine-tune here has one seed and every API arm ran once, so seed-to-seed and run-to-run variance isn't in them. The primary family is {0.6B LoRA, 8B QLoRA} x {luna few-shot, sol few-shot}, the four pairs that answer this repo's question, with Holm-adjusted p in the last column. It was named after the results were in. The other pairs are secondary and their p-values are unadjusted in the table.
+**Paired comparisons** on the same 3,080 items (accuracy, candidate minus baseline). CI from a paired bootstrap, p from the exact McNemar test, MDE is the smallest difference this pair could detect with 80% power (harness `stats`). Holm p is over the primary family, {0.6B LoRA, 8B QLoRA} x {luna few-shot, sol few-shot}, named after the results were in. Every fine-tune here has one seed and every API arm ran once, so seed-to-seed and run-to-run variance isn't in these CIs.
 
 | Baseline | Candidate | Baseline acc. | Candidate acc. | Difference (95% CI) | McNemar p | Discordant (base only / cand. only) | MDE | n | Family (Holm p) |
 |---|---|---|---|---|---|---|---|---|---|
@@ -52,6 +46,12 @@ Local latency depends on how busy the machine was (load 4 means all 4 vCPUs busy
 | qwen3-0.6b-lora-r16-s0 | gpt-6-sol-fewshot-k20 | 93.8% | 95.0% | +1.2 pts (+0.5 to +1.9) | 0.001 | 45 / 82 | 1.0 pts | 3,080 | primary (0.005) |
 | qwen3-8b-qlora-r16-s0 | gpt-6-luna-fewshot-k20 | 94.6% | 94.3% | -0.3 pts (-1.0 to +0.4) | 0.467 | 65 / 56 | 1.0 pts | 3,080 | primary (0.724) |
 | qwen3-8b-qlora-r16-s0 | gpt-6-sol-fewshot-k20 | 94.6% | 95.0% | +0.4 pts (-0.2 to +1.1) | 0.241 | 46 / 59 | 1.0 pts | 3,080 | primary (0.724) |
+
+<details>
+<summary>Secondary pairs (unadjusted p)</summary>
+
+| Baseline | Candidate | Baseline acc. | Candidate acc. | Difference (95% CI) | McNemar p | Discordant (base only / cand. only) | MDE | n | Family (Holm p) |
+|---|---|---|---|---|---|---|---|---|---|
 | logreg-bge-small | knn-bge-small-k20 | 93.4% | 92.2% | -1.2 pts (-1.9 to -0.5) | 0.002 | 83 / 47 | 1.1 pts | 3,080 | secondary |
 | logreg-bge-small | modernbert-base-full | 93.4% | 93.9% | +0.5 pts (-0.3 to +1.2) | 0.238 | 63 / 78 | 1.1 pts | 3,080 | secondary |
 | logreg-bge-small | qwen3-0.6b-lora-r16-s0 | 93.4% | 93.8% | +0.4 pts (-0.4 to +1.2) | 0.338 | 72 / 85 | 1.2 pts | 3,080 | secondary |
@@ -65,6 +65,30 @@ Local latency depends on how busy the machine was (load 4 means all 4 vCPUs busy
 | gpt-6-luna-fewshot-k20 | gpt-6-sol-fewshot-k20 | 94.3% | 95.0% | +0.7 pts (+0.2 to +1.2) | 0.008 | 21 / 43 | 0.7 pts | 3,080 | secondary |
 
 Holm over all 15 pairs at once gives the primary pairs qwen3-0.6b-lora-r16-s0 vs gpt-6-luna-fewshot-k20 1.000, qwen3-0.6b-lora-r16-s0 vs gpt-6-sol-fewshot-k20 0.014, qwen3-8b-qlora-r16-s0 vs gpt-6-luna-fewshot-k20 1.000, qwen3-8b-qlora-r16-s0 vs gpt-6-sol-fewshot-k20 1.000. The same pairs clear 0.05 either way, so the conclusions don't depend on which family is named. sol over luna few-shot (p=0.008) is suggestive only: Holm gives 0.041 over the secondary pairs and 0.065 over all of them.
+
+</details>
+
+<details>
+<summary>Cost and latency assumptions, one-off spend</summary>
+
+ECE is top-label expected calibration error with 15 bins (the kNN row's confidence is its winning vote share, not a probability). API latency is one request over the network and API cost is from measured token usage at list price. Local CPU cost assumes one Azure D4s v6 VM (4 vCPU, 16 GiB, 5th gen Xeon with AMX, the same CPU class these runs used) at the $0.202/hour Linux pay-as-you-go list price in East US 2 (Azure Retail Prices API, 2026-09-28), serving one message at a time with no batching and no idle time. The GPU row uses the Hugging Face Jobs a10g-large list price its run recorded ($1.50/hour, huggingface.co/docs/hub/jobs-pricing, 2026-09-28) on the same one-message-at-a-time basis.
+
+Local latency depends on how busy the machine was (load 4 means all 4 vCPUs busy, and the D4s v6 has 2 physical cores under them): `logreg-bge-small` with 1 torch thread(s) at load 6.91, `knn-bge-small-k20` with 1 torch thread(s) at load 6.91, `modernbert-base-full` with 2 torch thread(s) at load 2.01, `qwen3-0.6b-lora-r16-s0` with 2 torch thread(s) at load 2.0. `logreg-bge-small` and `knn-bge-small-k20` were timed on a shared machine with more work queued than it had vCPUs, not the idle D4s v6, but priced at the D4s v6 rate, so their latency and cost are upper bounds.
+
+| Run | One-off cost | What it paid for |
+|---|---|---|
+| logreg-bge-small | $0.0001 | training, 2 seconds on the CPU at the VM price |
+| modernbert-base-full | $0.0491 | training, 14.6 minutes on the CPU at the VM price |
+| qwen3-0.6b-lora-r16-s0 | $0.0785 | training, 23.3 minutes on the CPU at the VM price |
+| gpt-6-luna-zeroshot | $0.08 | 3,080 calls at list price, 0 failed, 0 invalid labels |
+| gpt-6-luna-fewshot-k20 | $0.22 | 3,080 calls at list price, 0 failed, 0 invalid labels |
+| gpt-6-sol-fewshot-k20 | $4.40 | 3,080 calls at list price, 0 failed, 0 invalid labels |
+| qwen3-8b-qlora-r16-s0 | $0.5513 | training, 22.1 minutes on one A10G at the job's list price |
+
+</details>
+
+<details>
+<summary>Learning curve, learning-rate sweep and CPU timing</summary>
 
 **Learning curve** (accuracy on the full test set). Subsets are nested across k and drawn from train minus dev. The LoRA curve runs train for 10 epochs at the sweep's learning rate, the full-data run for 2. See What didn't work for why this curve can't test the small-data claim.
 
@@ -82,9 +106,6 @@ LoRA learning-rate sweep on the 2,000-example stratified subset, one seed, score
 | 0.0001 | 59.7%, 79.5% | 4.7 |
 | 0.0003 | 77.6%, 86.2% | 4.7 |
 
-- Smoke run `modernbert-base`: 200 steps (6,379 examples from train minus dev), dev accuracy 85.4% (n=1,000), 11.7 training examples/s on 2 threads at load 8.06. A check that training learns, not a result.
-- Smoke run `qwen3-0.6b`: 200 steps (3,195 examples from train minus dev), dev accuracy 81.9% (n=1,000), 3.6 training examples/s on 2 threads at load 7.18. A check that training learns, not a result.
-
 Measured on INTEL(R) XEON(R) PLATINUM 8573C (2 threads, torch 2.14.0+cpu), load average 1.68 before and 1.79 after (4 means all 4 vCPUs busy):
 
 | Model | Training examples/s | Inference, batch 1 (p50) | Inference, batch 64 |
@@ -94,6 +115,8 @@ Measured on INTEL(R) XEON(R) PLATINUM 8573C (2 threads, torch 2.14.0+cpu), load 
 | bge-small encoder | n/a (frozen) | 8 ms | 177/s |
 
 Estimated wall-clock for the long targets: `make sweep` 14 min, `make train-final` 32 min per seed, `make train-modernbert` 19 min, `make learning-curve` 41 min.
+
+</details>
 <!-- results:end -->
 
 ## Quickstart

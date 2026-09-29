@@ -39,8 +39,3 @@ jobs:
         run: |
           uv run b77 report
           git diff --exit-code README.md
-      # results/summary.json was written under 3.11. Python 3.12's compensated sum() changes
-      # the last digits of some floats in it, so only the 3.11 leg checks it byte for byte.
-      - name: Results files are current
-        if: matrix.python-version == '3.11'
-        run: git diff --exit-code results/

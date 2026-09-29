@@ -1,28 +1,28 @@
 {
-  "measured_at": "2026-09-28T20:55:23",
-  "load_average_1m_before": 3.38,
-  "cpu": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+  "measured_at": "2026-09-28T21:47:33",
+  "load_average_1m_before": 1.68,
+  "cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
   "logical_cpus": 4,
-  "torch_threads": 4,
+  "torch_threads": 2,
   "torch": "2.14.0+cpu",
-  "python": "3.11.15",
+  "python": "3.11.16",
   "qwen3-0.6b": {
     "train": {
       "batch_size": 16,
       "steps": 40,
       "examples": 640,
-      "seconds": 179.2,
-      "examples_per_second": 3.57
+      "seconds": 49.46,
+      "examples_per_second": 12.94
     },
     "inference": {
-      "batch1_p50_ms": 117.31,
-      "batch1_mean_ms": 466.19,
-      "batch64_examples_per_second": 39.65
+      "batch1_p50_ms": 102.31,
+      "batch1_mean_ms": 105.2,
+      "batch64_examples_per_second": 30.82
     },
     "inference_merged": {
-      "batch1_p50_ms": 77.13,
-      "batch1_mean_ms": 81.57,
-      "batch64_examples_per_second": 50.15
+      "batch1_p50_ms": 73.61,
+      "batch1_mean_ms": 74.8,
+      "batch64_examples_per_second": 44.55
     }
   },
   "modernbert-base": {
@@ -30,27 +30,27 @@
       "batch_size": 32,
       "steps": 40,
       "examples": 1280,
-      "seconds": 38.93,
-      "examples_per_second": 32.88
+      "seconds": 38.89,
+      "examples_per_second": 32.91
     },
     "inference": {
-      "batch1_p50_ms": 62.47,
-      "batch1_mean_ms": 66.58,
-      "batch64_examples_per_second": 119.98
+      "batch1_p50_ms": 55.18,
+      "batch1_mean_ms": 55.79,
+      "batch64_examples_per_second": 120.96
     }
   },
   "bge-small": {
     "inference": {
-      "batch1_p50_ms": 8.57,
-      "batch1_mean_ms": 10.7,
-      "batch64_examples_per_second": 264.55
+      "batch1_p50_ms": 8.06,
+      "batch1_mean_ms": 8.69,
+      "batch64_examples_per_second": 177.21
     }
   },
-  "load_average_1m_after": 4.1,
+  "load_average_1m_after": 1.79,
   "estimates_minutes": {
-    "sweep": 40.0,
-    "train_final_per_seed": 117.8,
-    "train_modernbert": 19.1,
-    "learning_curve_lora": 131.2
+    "sweep": 13.5,
+    "train_final_per_seed": 31.7,
+    "train_modernbert": 18.6,
+    "learning_curve_lora": 41.2
   }
 }

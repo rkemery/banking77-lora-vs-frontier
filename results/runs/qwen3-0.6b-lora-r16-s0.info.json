@@ -1,0 +1,296 @@
+{
+  "run_id": "qwen3-0.6b-lora-r16-s0",
+  "config": {
+    "model": "qwen3-0.6b",
+    "lr": 0.0003,
+    "epochs": 2,
+    "batch_size": 16,
+    "warmup_ratio": 0.06,
+    "weight_decay": 0.0,
+    "lora_r": 16,
+    "lora_alpha": 32,
+    "lora_dropout": 0.0,
+    "max_length": 128,
+    "seed": 0,
+    "grad_clip": 1.0,
+    "max_steps": null,
+    "eval_batch_size": 64
+  },
+  "model": "Qwen/Qwen3-0.6B-Base",
+  "arm": "Qwen3-0.6B-Base, LoRA r16 alpha 32 on all linear layers, classification head, lr 0.0003 from the dev sweep, all of train",
+  "hf_id": "Qwen/Qwen3-0.6B-Base",
+  "revision": "da87bfb608c14b7cf20ba1ce41287e8de496c0cd",
+  "method": "lora",
+  "train_size": 10003,
+  "train_seconds": 1399.1,
+  "examples_per_second": 14.3,
+  "steps": 1252,
+  "loss_history": [
+    {
+      "step": 25,
+      "epoch": 1,
+      "loss": 5.740296020507812
+    },
+    {
+      "step": 50,
+      "epoch": 1,
+      "loss": 4.382980899810791
+    },
+    {
+      "step": 75,
+      "epoch": 1,
+      "loss": 3.1262452840805053
+    },
+    {
+      "step": 100,
+      "epoch": 1,
+      "loss": 1.5470800471305848
+    },
+    {
+      "step": 125,
+      "epoch": 1,
+      "loss": 1.2271773147583007
+    },
+    {
+      "step": 150,
+      "epoch": 1,
+      "loss": 1.0784628939628602
+    },
+    {
+      "step": 175,
+      "epoch": 1,
+      "loss": 1.004759392142296
+    },
+    {
+      "step": 200,
+      "epoch": 1,
+      "loss": 0.6682372707128524
+    },
+    {
+      "step": 225,
+      "epoch": 1,
+      "loss": 0.6652025127410889
+    },
+    {
+      "step": 250,
+      "epoch": 1,
+      "loss": 0.6968195581436157
+    },
+    {
+      "step": 275,
+      "epoch": 1,
+      "loss": 0.5413255593180657
+    },
+    {
+      "step": 300,
+      "epoch": 1,
+      "loss": 0.6276584023237228
+    },
+    {
+      "step": 325,
+      "epoch": 1,
+      "loss": 0.5055361545085907
+    },
+    {
+      "step": 350,
+      "epoch": 1,
+      "loss": 0.6107561683654785
+    },
+    {
+      "step": 375,
+      "epoch": 1,
+      "loss": 0.4577455076575279
+    },
+    {
+      "step": 400,
+      "epoch": 1,
+      "loss": 0.38000023767352104
+    },
+    {
+      "step": 425,
+      "epoch": 1,
+      "loss": 0.6085915071889758
+    },
+    {
+      "step": 450,
+      "epoch": 1,
+      "loss": 0.4856836202740669
+    },
+    {
+      "step": 475,
+      "epoch": 1,
+      "loss": 0.41667613983154295
+    },
+    {
+      "step": 500,
+      "epoch": 1,
+      "loss": 0.4931988973915577
+    },
+    {
+      "step": 525,
+      "epoch": 1,
+      "loss": 0.3382811057567596
+    },
+    {
+      "step": 550,
+      "epoch": 1,
+      "loss": 0.49933807712048295
+    },
+    {
+      "step": 575,
+      "epoch": 1,
+      "loss": 0.3231159433722496
+    },
+    {
+      "step": 600,
+      "epoch": 1,
+      "loss": 0.3234977146983147
+    },
+    {
+      "step": 625,
+      "epoch": 1,
+      "loss": 0.324467857144773
+    },
+    {
+      "step": 650,
+      "epoch": 2,
+      "loss": 0.235824270863086
+    },
+    {
+      "step": 675,
+      "epoch": 2,
+      "loss": 0.17722200837917626
+    },
+    {
+      "step": 700,
+      "epoch": 2,
+      "loss": 0.11845826581353322
+    },
+    {
+      "step": 725,
+      "epoch": 2,
+      "loss": 0.17023053288459777
+    },
+    {
+      "step": 750,
+      "epoch": 2,
+      "loss": 0.16267553116194905
+    },
+    {
+      "step": 775,
+      "epoch": 2,
+      "loss": 0.18526098613627254
+    },
+    {
+      "step": 800,
+      "epoch": 2,
+      "loss": 0.18047717263456434
+    },
+    {
+      "step": 825,
+      "epoch": 2,
+      "loss": 0.1798030712758191
+    },
+    {
+      "step": 850,
+      "epoch": 2,
+      "loss": 0.23305818221066146
+    },
+    {
+      "step": 875,
+      "epoch": 2,
+      "loss": 0.17733940902631729
+    },
+    {
+      "step": 900,
+      "epoch": 2,
+      "loss": 0.13025661425082943
+    },
+    {
+      "step": 925,
+      "epoch": 2,
+      "loss": 0.15111812746617942
+    },
+    {
+      "step": 950,
+      "epoch": 2,
+      "loss": 0.16637862431351094
+    },
+    {
+      "step": 975,
+      "epoch": 2,
+      "loss": 0.15481783180730418
+    },
+    {
+      "step": 1000,
+      "epoch": 2,
+      "loss": 0.0802105550118722
+    },
+    {
+      "step": 1025,
+      "epoch": 2,
+      "loss": 0.1416980483569205
+    },
+    {
+      "step": 1050,
+      "epoch": 2,
+      "loss": 0.19225458924891428
+    },
+    {
+      "step": 1075,
+      "epoch": 2,
+      "loss": 0.10041289533954113
+    },
+    {
+      "step": 1100,
+      "epoch": 2,
+      "loss": 0.15041716907639058
+    },
+    {
+      "step": 1125,
+      "epoch": 2,
+      "loss": 0.06542390816146508
+    },
+    {
+      "step": 1150,
+      "epoch": 2,
+      "loss": 0.12872881561459507
+    },
+    {
+      "step": 1175,
+      "epoch": 2,
+      "loss": 0.09884333095047623
+    },
+    {
+      "step": 1200,
+      "epoch": 2,
+      "loss": 0.09754351041163317
+    },
+    {
+      "step": 1225,
+      "epoch": 2,
+      "loss": 0.14103544306475668
+    },
+    {
+      "step": 1250,
+      "epoch": 2,
+      "loss": 0.15525153921917081
+    },
+    {
+      "step": 1252,
+      "epoch": 2,
+      "loss": 0.003998794825747609
+    }
+  ],
+  "test_batch_size": 1,
+  "latency": "tokenise, forward pass and softmax for one message, batch 1, bf16 autocast",
+  "adapter_dir": "artifacts/models/qwen3-0.6b-lora-r16-s0",
+  "hardware": {
+    "cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
+    "logical_cpus": 4,
+    "torch_threads": 2,
+    "torch": "2.14.0+cpu",
+    "python": "3.11.16",
+    "load_average_1m": 2.0
+  }
+}

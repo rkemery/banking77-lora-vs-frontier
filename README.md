@@ -1,6 +1,6 @@
 # banking77-lora-vs-frontier
 
-A 0.6B open model with a LoRA classification head, trained on a 4-core CPU, against prompting frontier API models (gpt-6-luna, gpt-6-sol) on Banking77 intent classification.
+A 0.6B open model with a LoRA classification head, trained on a small cloud CPU (4 vCPU), and an 8B model with QLoRA on one GPU, against prompting frontier API models (gpt-6-luna, gpt-6-sol) on Banking77 intent classification.
 Every arm is scored on the same 3,080 test messages with accuracy, macro-F1, paired significance tests, latency and cost per 1,000 predictions.
 
 ## Results
@@ -12,8 +12,8 @@ Every arm is scored on the same 3,080 test messages with accuracy, macro-F1, pai
 |---|---|---|---|---|---|---|
 | LogReg on bge-small embeddings | 93.4% (92.5 to 94.3) | 93.4% (92.4 to 94.2) | 92.6% (91.5 to 93.5) | 0.104 | 17 / 26 ms (CPU, batch 1) | $0.0010 |
 | kNN vote over the same 20 retrieved neighbours | 92.2% (91.3 to 93.2) | 92.2% (91.2 to 93.1) | 91.3% (90.2 to 92.4) | 0.039 | 19 / 27 ms (CPU, batch 1) | $0.0011 |
-| ModernBERT-base, full fine-tune | pending CPU run: `make train-modernbert` | | | | | |
-| Qwen3-0.6B-Base + LoRA r16, classification head | pending CPU run: `make sweep`, then `make train-final` | | | | | |
+| ModernBERT-base, full fine-tune | 93.9% (93.0 to 94.7) | 93.9% (92.9 to 94.7) | 93.1% (92.0 to 94.0) | 0.020 | 52 / 59 ms (CPU, batch 1) | $0.0030 |
+| Qwen3-0.6B-Base + LoRA r16, classification head | 93.8% (93.0 to 94.6) | 93.8% (92.9 to 94.6) | 92.9% (92.0 to 93.9) | 0.031 | 105 / 131 ms (CPU, batch 1) | $0.0061 |
 | gpt-6-luna zero-shot, label descriptions | pending live run: `make prompt-luna-zeroshot` | | | | | |
 | gpt-6-luna, 20 retrieved examples | pending live run: `make prompt-luna-fewshot` | | | | | |
 | gpt-6-sol, 20 retrieved examples | pending live run: `make prompt-sol-fewshot` | | | | | |
@@ -21,18 +21,20 @@ Every arm is scored on the same 3,080 test messages with accuracy, macro-F1, pai
 
 n = 3,080 test items (40 per class) for every row. CIs are percentile bootstraps over items (10,000 resamples). The dedup column drops the 418 test items whose nearest training message has the same label at character n-gram cosine >= 0.90. ECE is top-label expected calibration error with 15 bins (the kNN row's confidence is its winning vote share, not a probability). API latency is one request over the network and API cost is from measured token usage at list price. Local CPU cost assumes one Azure D4s v6 VM (4 vCPU, 16 GiB, 5th gen Xeon with AMX, the same CPU class these runs used) at the $0.202/hour Linux pay-as-you-go list price in East US 2 (Azure Retail Prices API, 2026-09-28), serving one message at a time with no batching and no idle time. The GPU row uses the Hugging Face Jobs a10g-large list price its run recorded ($1.50/hour, huggingface.co/docs/hub/jobs-pricing, 2026-09-28) on the same one-message-at-a-time basis.
 
-Local latency depends on how busy the machine was (load 4 means all 4 cores busy): `logreg-bge-small` with 1 torch thread(s) at load 6.91, `knn-bge-small-k20` with 1 torch thread(s) at load 6.91, `qwen3-8b-qlora-r16-s0` with None torch thread(s) at load None.
+Local latency depends on how busy the machine was (load 4 means all 4 cores busy): `logreg-bge-small` with 1 torch thread(s) at load 6.91, `knn-bge-small-k20` with 1 torch thread(s) at load 6.91, `modernbert-base-full` with 2 torch thread(s) at load 2.01, `qwen3-0.6b-lora-r16-s0` with 2 torch thread(s) at load 2.0.
 
 - `logreg-bge-small` trained in 2 seconds on the CPU (about $0.0001 at the VM price above).
-- `qwen3-8b-qlora-r16-s0` trained in 22.1 minutes on the CPU (about $0.5513 at the VM price above).
+- `modernbert-base-full` trained in 14.6 minutes on the CPU (about $0.0491 at the VM price above).
+- `qwen3-0.6b-lora-r16-s0` trained in 23.3 minutes on the CPU (about $0.0785 at the VM price above).
+- `qwen3-8b-qlora-r16-s0` trained in 22.1 minutes on one A10G (about $0.5513 at the job's list price).
 
 **Paired comparisons** on the same 3,080 items (accuracy, candidate minus baseline). CI from a paired bootstrap, p from the exact McNemar test, MDE is the smallest difference this pair could detect with 80% power (harness `stats`).
 
 | Baseline | Candidate | Baseline acc. | Candidate acc. | Difference (95% CI) | McNemar p | Discordant (base only / cand. only) | MDE | n |
 |---|---|---|---|---|---|---|---|---|
 | logreg-bge-small | knn-bge-small-k20 | 93.4% | 92.2% | -1.2 pts (-1.9 to -0.5) | 0.002 | 83 / 47 | 1.1 pts | 3,080 |
-| logreg-bge-small | modernbert-base-full | pending | | | | | | |
-| modernbert-base-full | qwen3-0.6b-lora-r16-s0 | pending | | | | | | |
+| logreg-bge-small | modernbert-base-full | 93.4% | 93.9% | +0.5 pts (-0.3 to +1.2) | 0.238 | 63 / 78 | 1.1 pts | 3,080 |
+| modernbert-base-full | qwen3-0.6b-lora-r16-s0 | 93.9% | 93.8% | -0.1 pts (-0.8 to +0.7) | 0.934 | 74 / 72 | 1.1 pts | 3,080 |
 | qwen3-0.6b-lora-r16-s0 | gpt-6-luna-zeroshot | pending | | | | | | |
 | qwen3-0.6b-lora-r16-s0 | gpt-6-luna-fewshot-k20 | pending | | | | | | |
 | qwen3-0.6b-lora-r16-s0 | gpt-6-sol-fewshot-k20 | pending | | | | | | |
@@ -44,27 +46,30 @@ Local latency depends on how busy the machine was (load 4 means all 4 cores busy
 
 | Examples per class | Train size | LogReg on bge-small (mean of 3 draws, sd) | Qwen3-0.6B LoRA (draw 0) |
 |---|---|---|---|
-| 5 | 385 | 83.3% (sd 0.5) | pending CPU run: `make learning-curve` |
-| 10 | 770 | 87.3% (sd 1.0) | pending CPU run: `make learning-curve` |
-| 20 | 1,540 | 89.3% (sd 0.4) | pending CPU run: `make learning-curve` |
-| all (about 130) | 10,003 | 93.4% (one fit) | pending |
+| 5 | 385 | 83.3% (sd 0.5) | 61.6% |
+| 10 | 770 | 87.3% (sd 1.0) | 79.3% |
+| 20 | 1,540 | 89.3% (sd 0.4) | 86.9% |
+| all (about 130) | 10,003 | 93.4% (one fit) | 93.8% |
 
-LoRA learning-rate sweep: pending CPU run (`make sweep`).
+LoRA learning-rate sweep on the 2,000-example stratified subset, one seed, scored on the 1,000-item dev split. Chosen: 0.0003.
+
+| Learning rate | Dev accuracy by epoch | Train minutes |
+|---|---|---|
+| 0.0001 | 59.7%, 79.5% | 4.7 |
+| 0.0003 | 77.6%, 86.2% | 4.7 |
 
 - Smoke run `modernbert-base`: 200 steps (6,379 examples from train minus dev), dev accuracy 85.4% (n=1,000), 11.7 training examples/s on 2 threads at load 8.06. A check that training learns, not a result.
 - Smoke run `qwen3-0.6b`: 200 steps (3,195 examples from train minus dev), dev accuracy 81.9% (n=1,000), 3.6 training examples/s on 2 threads at load 7.18. A check that training learns, not a result.
 
-Measured on Intel(R) Xeon(R) Processor @ 2.10GHz (4 threads, torch 2.14.0+cpu), load average 3.38 before and 4.1 after (4 is a fully busy machine):
+Measured on INTEL(R) XEON(R) PLATINUM 8573C (2 threads, torch 2.14.0+cpu), load average 1.68 before and 1.79 after (4 is a fully busy machine):
 
 | Model | Training examples/s | Inference, batch 1 (p50) | Inference, batch 64 |
 |---|---|---|---|
-| Qwen3-0.6B-Base + LoRA (bs 16) | 3.6 | 117 ms unmerged, 77 ms merged | 40/s |
-| ModernBERT-base (bs 32) | 32.9 | 62 ms | 120/s |
-| bge-small encoder | n/a (frozen) | 9 ms | 265/s |
+| Qwen3-0.6B-Base + LoRA (bs 16) | 12.9 | 102 ms unmerged, 74 ms merged | 31/s |
+| ModernBERT-base (bs 32) | 32.9 | 55 ms | 121/s |
+| bge-small encoder | n/a (frozen) | 8 ms | 177/s |
 
-Other jobs shared the CPU during this measurement, so an idle machine with 4 threads will be faster. `make timing` re-measures.
-
-Estimated wall-clock for the long targets: `make sweep` 40 min, `make train-final` 118 min per seed, `make train-modernbert` 19 min, `make learning-curve` 131 min.
+Estimated wall-clock for the long targets: `make sweep` 14 min, `make train-final` 32 min per seed, `make train-modernbert` 19 min, `make learning-curve` 41 min.
 <!-- results:end -->
 
 ## Quickstart
@@ -155,7 +160,7 @@ This repo does not redo that work. It adds the frontier-API side: two gpt-6 mode
 - **A C grid that stopped at 100.** Two logistic-regression fits on the learning curve picked C = 100, the edge of the first grid, so the grid now reaches 1,000. One fit then picked 1,000, and the full-data fit still picks 10.
 - **Casting the fine-tuned ModernBERT to bf16 for inference.** `.to(torch.bfloat16)` also rounds buffers, and a dry run showed the cast model and the same checkpoint reloaded from disk disagreeing on predictions. Full fine-tunes now predict with their fp32 weights under the same bf16 autocast as training, and a reloaded checkpoint matches to within 5e-6 in probability.
 - **ModernBERT's `reference_compile` flag.** transformers 5 removed it, so the first load failed. The model runs uncompiled.
-- **Timing on a shared machine.** Other jobs shared the same 4 cores during the timing run, and oversubscribed CPU threads slow PyTorch far more than the load alone suggests. `results/timing.json` records the load average before and after, and estimates made under load are pessimistic for an idle machine.
+- **Timing on a shared machine.** The first timing run shared its 4 cores with other jobs, and oversubscribed CPU threads slow PyTorch far more than the load alone suggests: LoRA training measured 3.6 examples/s there. The long runs and the timing table were redone on an otherwise idle Azure D4s v6, where the same training ran at about 13 to 14 examples/s. The logistic-regression and kNN latencies are still from the loaded machine, so they are upper bounds.
 
 ## Limitations
 
@@ -166,6 +171,7 @@ This repo does not redo that work. It adds the frontier-API side: two gpt-6 mode
 - **No calibration for the API arms** (no logprobs), and API latency includes the network and the provider's queue on the day of the run.
 - **CPU cost is an assumption.** It prices serial batch-1 inference on a comparable VM at list price with no idle time. Batching raises throughput several times, and a GPU changes the picture.
 - **The 8B row ran on a GPU, the other local rows on a CPU.** Its latency and cost use the A10G and the job's list price, so compare them with the CPU rows as a different deployment, not a like-for-like speed test. It has one seed.
+- **Two PyTorch threads.** The D4s v6 has 4 vCPUs on 2 physical cores, and PyTorch 2.14 used 2 threads (one per core) even with `OMP_NUM_THREADS=4`. Every CPU number here is at 2 threads, as `results/timing.json` and each run's info file record.
 - **Token and time estimates for the API arms** use the Qwen3 tokenizer as a stand-in for the provider's, so they are rough (about +/- 25%).
 
 ## Cost of a full live run

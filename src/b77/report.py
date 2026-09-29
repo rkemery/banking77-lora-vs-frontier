@@ -170,6 +170,7 @@ def arm_metrics(spec: ArmSpec, runs: list[Run], dedup_ids: list[str]) -> dict[st
     if train_seconds is not None and price is not None:
         out["train_minutes"] = train_seconds / 60
         out["train_cost_usd"] = price * train_seconds / 3600
+        out["train_on"] = spec.kind
     return out
 
 
@@ -293,7 +294,7 @@ def conditions_line(runs: dict[str, Run]) -> list[str]:
     parts = []
     for run_id, run in runs.items():
         hw = run.info.get("hardware")
-        if not hw:
+        if not hw or "gpu" in hw:
             continue
         embed = hw.get("embedding_latency_measured_with") or {}
         threads = embed.get("torch_threads", hw.get("torch_threads"))
@@ -318,9 +319,13 @@ def spend_lines(full: dict[str, dict[str, Any]]) -> list[str]:
                 if m["train_minutes"] < 1
                 else f"{m['train_minutes']:.1f} minutes"
             )
+            where = (
+                "on one A10G (about ${cost:.4f} at the job's list price)"
+                if m.get("train_on") == "gpu"
+                else "on the CPU (about ${cost:.4f} at the VM price above)"
+            )
             lines.append(
-                f"- `{run_id}` trained in {took} on the CPU "
-                f"(about ${m['train_cost_usd']:.4f} at the VM price above)."
+                f"- `{run_id}` trained in {took} {where.format(cost=m['train_cost_usd'])}."
             )
         elif m["total_cost_usd"] > 0:
             lines.append(
@@ -412,7 +417,7 @@ def timing_lines(timing: dict[str, Any] | None) -> list[str]:
                 "threads will be faster. `make timing` re-measures.",
                 "",
             ]
-            if timing["load_average_1m_before"] > 1.5
+            if timing["load_average_1m_before"] > timing["logical_cpus"] / 2
             else []
         ),
         f"Estimated wall-clock for the long targets: `make sweep` {est['sweep']:.0f} min, "

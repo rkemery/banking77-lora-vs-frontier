@@ -27,7 +27,8 @@
       "latency_p50_ms": 17.417,
       "latency_p95_ms": 25.6042,
       "train_minutes": 0.035337439583327065,
-      "train_cost_usd": 0.00011896937993053448
+      "train_cost_usd": 0.00011896937993053448,
+      "train_on": "local"
     },
     "knn-bge-small-k20": {
       "run_id": "knn-bge-small-k20",
@@ -56,6 +57,66 @@
       "latency_p50_ms": 18.554499999999997,
       "latency_p95_ms": 26.746
     },
+    "modernbert-base-full": {
+      "run_id": "modernbert-base-full",
+      "n": 3080,
+      "accuracy": 0.938961038961039,
+      "accuracy_ci": [
+        0.9301948051948052,
+        0.9474025974025974
+      ],
+      "macro_f1": 0.9388768400716814,
+      "macro_f1_ci": [
+        0.9293183306275535,
+        0.9465286703602063
+      ],
+      "dedup_n": 2662,
+      "dedup_accuracy": 0.930503380916604,
+      "dedup_accuracy_ci": [
+        0.9203606311044328,
+        0.9398948159278738
+      ],
+      "ece": 0.01958594805194807,
+      "errors": 0,
+      "invalid": 0,
+      "cost_per_1k_usd": 0.0029714568547979806,
+      "total_cost_usd": 0.0,
+      "latency_p50_ms": 52.1465,
+      "latency_p95_ms": 58.7405,
+      "train_minutes": 14.58,
+      "train_cost_usd": 0.049086,
+      "train_on": "local"
+    },
+    "qwen3-0.6b-lora-r16-s0": {
+      "run_id": "qwen3-0.6b-lora-r16-s0",
+      "n": 3080,
+      "accuracy": 0.9383116883116883,
+      "accuracy_ci": [
+        0.9295454545454546,
+        0.9464285714285714
+      ],
+      "macro_f1": 0.938243255063703,
+      "macro_f1_ci": [
+        0.9286564737479269,
+        0.9458835283444896
+      ],
+      "dedup_n": 2662,
+      "dedup_accuracy": 0.9293764087152517,
+      "dedup_accuracy_ci": [
+        0.9196093163035312,
+        0.9387678437265214
+      ],
+      "ece": 0.031158571428571404,
+      "errors": 0,
+      "invalid": 0,
+      "cost_per_1k_usd": 0.0060823821939033195,
+      "total_cost_usd": 0.0,
+      "latency_p50_ms": 104.749,
+      "latency_p95_ms": 131.3011,
+      "train_minutes": 23.31833333333333,
+      "train_cost_usd": 0.07850505555555555,
+      "train_on": "local"
+    },
     "qwen3-8b-qlora-r16-s0": {
       "run_id": "qwen3-8b-qlora-r16-s0",
       "n": 3080,
@@ -83,7 +144,8 @@
       "latency_p50_ms": 112.4065,
       "latency_p95_ms": 124.09869999999997,
       "train_minutes": 22.051666666666666,
-      "train_cost_usd": 0.5512916666666666
+      "train_cost_usd": 0.5512916666666666,
+      "train_on": "gpu"
     }
   },
   "dedup": {

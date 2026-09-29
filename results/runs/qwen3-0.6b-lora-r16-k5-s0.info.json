@@ -1,0 +1,91 @@
+{
+  "run_id": "qwen3-0.6b-lora-r16-k5-s0",
+  "config": {
+    "model": "qwen3-0.6b",
+    "lr": 0.0003,
+    "epochs": 10,
+    "batch_size": 16,
+    "warmup_ratio": 0.06,
+    "weight_decay": 0.0,
+    "lora_r": 16,
+    "lora_alpha": 32,
+    "lora_dropout": 0.0,
+    "max_length": 128,
+    "seed": 0,
+    "grad_clip": 1.0,
+    "max_steps": null,
+    "eval_batch_size": 64
+  },
+  "model": "Qwen/Qwen3-0.6B-Base",
+  "arm": "Qwen3-0.6B-Base LoRA r16, 5 examples per class (draw 0), lr 0.0003",
+  "hf_id": "Qwen/Qwen3-0.6B-Base",
+  "revision": "da87bfb608c14b7cf20ba1ce41287e8de496c0cd",
+  "method": "lora",
+  "train_size": 385,
+  "train_seconds": 264.4,
+  "examples_per_second": 14.56,
+  "steps": 250,
+  "loss_history": [
+    {
+      "step": 25,
+      "epoch": 1,
+      "loss": 5.365111961364746
+    },
+    {
+      "step": 50,
+      "epoch": 2,
+      "loss": 3.168703670501709
+    },
+    {
+      "step": 75,
+      "epoch": 3,
+      "loss": 0.6653963751718401
+    },
+    {
+      "step": 100,
+      "epoch": 4,
+      "loss": 0.11192963704465456
+    },
+    {
+      "step": 125,
+      "epoch": 5,
+      "loss": 0.035219644262397196
+    },
+    {
+      "step": 150,
+      "epoch": 6,
+      "loss": 0.01968326441710815
+    },
+    {
+      "step": 175,
+      "epoch": 7,
+      "loss": 0.0005122296221085775
+    },
+    {
+      "step": 200,
+      "epoch": 8,
+      "loss": 0.00013599729689076412
+    },
+    {
+      "step": 225,
+      "epoch": 9,
+      "loss": 0.00010648760347748975
+    },
+    {
+      "step": 250,
+      "epoch": 10,
+      "loss": 9.511325726521135e-05
+    }
+  ],
+  "test_batch_size": 64,
+  "latency": "not measured (batched evaluation)",
+  "adapter_dir": null,
+  "hardware": {
+    "cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
+    "logical_cpus": 4,
+    "torch_threads": 2,
+    "torch": "2.14.0+cpu",
+    "python": "3.11.16",
+    "load_average_1m": 2.0
+  }
+}

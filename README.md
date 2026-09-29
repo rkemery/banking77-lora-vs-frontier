@@ -1,10 +1,10 @@
 # banking77-lora-vs-frontier
 
-Qwen3-0.6B with LoRA on a 4 vCPU cloud CPU and Qwen3-8B with QLoRA on one GPU, against prompted frontier APIs (gpt-6-luna, gpt-6-sol), all scored on the same 3,080 Banking77 test messages for accuracy, paired significance, latency and cost per 1,000 predictions.
+Qwen3 LoRA/QLoRA vs prompted gpt-6 on Banking77: accuracy, paired tests, latency and cost on 3,080 test messages.
 
 <!-- headline:start -->
-- **gpt-6-sol with 20 retrieved examples beats the Qwen3-0.6B LoRA** by 1.2 points (95.0% vs 93.8% on 3,080 test messages, McNemar p=0.001, Holm-adjusted 0.005), at about 20x the per-prediction cost of gpt-6-luna with the same examples. Luna few-shot (p=0.251) and the Qwen3-8B QLoRA (p=0.040, 0.160 after Holm over the secondary pairs) can't be separated from the 0.6B.
-- **Logistic regression on frozen bge-small embeddings** costs $0.0010 per 1k predictions, trains in 2 s, and is at most 1.2 points below the 0.6B LoRA (95% CI).
+- **gpt-6-sol with 20 retrieved examples beats the Qwen3-0.6B LoRA** by 1.2 points (95.0% vs 93.8% on 3,080 test messages, McNemar p=0.001, Holm-adjusted 0.005), at about 20x luna's cost. Luna few-shot (p=0.251) and the Qwen3-8B QLoRA (p=0.040, 0.160 after Holm over the secondary pairs) can't be separated from the 0.6B.
+- **Logistic regression on frozen bge-small embeddings** is **at most 1.2 points below** the 0.6B LoRA (95% CI), costs $0.0010 per 1k predictions and trains in 2 s.
 - **A local model is only cheaper than luna few-shot while it stays busy:** above 8.5% utilization for the 0.6B's CPU box and 66.3% for the 8B's A10G. One seed per model and one run per API arm.
 <!-- headline:end -->
 
@@ -45,8 +45,6 @@ The live targets need `AZURE_OPENAI_BASE_URL` and either `AZURE_OPENAI_API_KEY` 
 
 ## Results
 
-`make demo` rebuilds this section and the bullets above from the run files in `results/`.
-
 <!-- results:start -->
 | Arm | Accuracy (95% CI) | Macro-F1 (95% CI) | Accuracy, dedup test (n=2,662) | ECE | Latency p50 / p95 | Cost per 1k predictions |
 |---|---|---|---|---|---|---|
@@ -59,20 +57,26 @@ The live targets need `AZURE_OPENAI_BASE_URL` and either `AZURE_OPENAI_API_KEY` 
 | gpt-6-sol, 20 retrieved examples | 95.0% (94.3 to 95.8) | 95.0% (94.2 to 95.7) | 94.3% (93.4 to 95.2) | n/a (no logprobs) | 1704 / 3589 ms | $1.43 |
 | Qwen3-8B-Base QLoRA r16 (one A10G, Hugging Face Jobs) | 94.6% (93.8 to 95.4) | 94.6% (93.7 to 95.3) | 93.9% (93.0 to 94.7) | 0.026 | 112 / 124 ms (A10G GPU, batch 1) | $0.0473 |
 
-n = 3,080 test items (40 per class) for every row, with 95% percentile bootstrap CIs over items. The dedup column drops the 418 test items whose nearest training message has the same label at character n-gram cosine >= 0.90.
+n = 3,080 test items (40 per class) for every row, with 95% percentile bootstrap CIs over items (10,000 resamples). The dedup column drops the 418 test items whose nearest training message has the same label at character n-gram cosine >= 0.90.
 
-Every arm scores 0.7 to 1.0 points lower on the dedup subset. That includes `gpt-6-luna-zeroshot` (1.0), which has no training messages in its prompt, so the dropped twins are mostly easier messages, not answers the fine-tuned models memorised.
-
-**Break-even utilization.** A rented box costs the same per hour busy or idle, and the API bills per call. So a local arm is only cheaper while its box is busy for more than (local cost / API cost) of the time, training excluded.
+**Break-even utilization.** A local arm is only cheaper than an API while its box is busy for more than (local cost / API cost) of the time, since the box bills by the hour and the API by the call (training excluded).
 
 | Local arm | Cost per 1k, fully busy | API arm | Cost per 1k | Local is cheaper |
 |---|---|---|---|---|
 | qwen3-0.6b-lora-r16-s0 (CPU) | $0.0061 | gpt-6-luna-fewshot-k20 | $0.0713 | above 8.5% utilization |
-| qwen3-0.6b-lora-r16-s0 (CPU) | $0.0061 | gpt-6-sol-fewshot-k20 | $1.43 | above 0.4% utilization |
 | qwen3-8b-qlora-r16-s0 (A10G) | $0.0473 | gpt-6-luna-fewshot-k20 | $0.0713 | above 66.3% utilization |
+
+<details>
+<summary>Break-even against gpt-6-sol</summary>
+
+| Local arm | Cost per 1k, fully busy | API arm | Cost per 1k | Local is cheaper |
+|---|---|---|---|---|
+| qwen3-0.6b-lora-r16-s0 (CPU) | $0.0061 | gpt-6-sol-fewshot-k20 | $1.43 | above 0.4% utilization |
 | qwen3-8b-qlora-r16-s0 (A10G) | $0.0473 | gpt-6-sol-fewshot-k20 | $1.43 | above 3.3% utilization |
 
-**Paired comparisons** on the same 3,080 items (accuracy, candidate minus baseline). CI from a paired bootstrap, p from the exact McNemar test, MDE is the smallest difference this pair could detect with 80% power (harness `stats`). Holm p is over the primary family, {0.6B LoRA, 8B QLoRA} x {luna few-shot, sol few-shot}, named after the results were in. Every fine-tune here has one seed and every API arm ran once, so seed-to-seed and run-to-run variance isn't in these CIs.
+</details>
+
+**Paired comparisons** on the same 3,080 items (accuracy, candidate minus baseline). Holm p is over the primary family, {0.6B LoRA, 8B QLoRA} x {luna few-shot, sol few-shot}, named after the results were in. Every fine-tune here has one seed and every API arm ran once, so seed-to-seed and run-to-run variance isn't in these CIs.
 
 | Baseline | Candidate | Baseline acc. | Candidate acc. | Difference (95% CI) | McNemar p | Discordant (base only / cand. only) | MDE | n | Family (Holm p) |
 |---|---|---|---|---|---|---|---|---|---|
@@ -83,6 +87,8 @@ Every arm scores 0.7 to 1.0 points lower on the dedup subset. That includes `gpt
 
 <details>
 <summary>Secondary pairs (unadjusted p)</summary>
+
+In both tables, CI is from a paired bootstrap, p from the exact McNemar test, and MDE is the smallest difference the pair could detect with 80% power (harness `stats`).
 
 | Baseline | Candidate | Baseline acc. | Candidate acc. | Difference (95% CI) | McNemar p | Discordant (base only / cand. only) | MDE | n | Family (Holm p) |
 |---|---|---|---|---|---|---|---|---|---|
@@ -103,7 +109,9 @@ Holm over all 15 pairs at once gives the primary pairs qwen3-0.6b-lora-r16-s0 vs
 </details>
 
 <details>
-<summary>Cost and latency assumptions, one-off spend</summary>
+<summary>Dedup gap, cost and latency assumptions, one-off spend</summary>
+
+Every arm scores 0.7 to 1.0 points lower on the dedup subset. That includes `gpt-6-luna-zeroshot` (1.0), which has no training messages in its prompt, so the dropped twins are mostly easier messages, not answers the fine-tuned models memorised.
 
 ECE is top-label expected calibration error with 15 bins (the kNN row's confidence is its winning vote share, not a probability). API latency is one request over the network and API cost is from measured token usage at list price. Local CPU cost assumes one Azure D4s v6 VM (4 vCPU, 16 GiB, 5th gen Xeon with AMX, the same CPU class these runs used) at the $0.202/hour Linux pay-as-you-go list price in East US 2 (Azure Retail Prices API, 2026-09-28), serving one message at a time with no batching and no idle time. The GPU row uses the Hugging Face Jobs a10g-large list price its run recorded ($1.50/hour, huggingface.co/docs/hub/jobs-pricing, 2026-09-28) on the same one-message-at-a-time basis.
 
@@ -157,21 +165,29 @@ Estimated wall-clock for the long targets: `make sweep` 14 min, `make train-fina
 
 | What | How |
 |---|---|
-| Accuracy and macro-F1 | All 3,080 test messages (40 per intent), with 95% percentile bootstrap CIs over items. Macro-F1 also catches a model that dumps messages into a few intents. |
 | Dedup accuracy | Drops test messages whose nearest training message has the same label at character 3 to 5 gram TF-IDF cosine >= 0.90 (the ank018/lora-banking77 method), so a fine-tune can't score by recall. |
 | Label budget | The fine-tunes, LogReg and kNN train on all 10,003 training messages, and the few-shot arms retrieve from the same 10,003. The zero-shot arm's intent descriptions were written from the label names and a few training examples per label (`src/b77/labels.py`). |
 | Paired tests | Every arm answers the same items. Paired bootstrap CI on the difference, exact McNemar p and minimum detectable effect, all from the harness `stats` module. |
+| Cost per 1,000 predictions | API arms: measured token usage at list price, cached input at the cached rate. Local arms: CPU time at a comparable cloud VM's list price. Training cost is separate. |
+
+[ank018/lora-banking77](https://github.com/ank018/lora-banking77) already compared local models on this test set carefully, so this repo adds the frontier-API side with measured cost and latency, paired tests and a classification-head LoRA small enough for a 4-core CPU.
+
+<details>
+<summary>Accuracy, calibration, latency and learning curve</summary>
+
+| What | How |
+|---|---|
+| Accuracy and macro-F1 | All 3,080 test messages (40 per intent), with 95% percentile bootstrap CIs over items. Macro-F1 also catches a model that dumps messages into a few intents. |
 | Calibration (ECE) | Local models only, since gpt-6 deployments reject `logprobs`. |
 | Latency p50 / p95 | Local models one message at a time on the CPU they trained on. API arms per request over the network. |
-| Cost per 1,000 predictions | API arms: measured token usage at list price, cached input at the cached rate. Local arms: CPU time at a comparable cloud VM's list price. Training cost is separate. |
 | Learning curve | 5, 10 and 20 examples per class, LogReg over three draws and the 0.6B LoRA on one. See [What didn't work](#what-didnt-work). |
 
-[ank018/lora-banking77](https://github.com/ank018/lora-banking77) already ran the local side of this comparison carefully, and on the same test set the LogReg row here is within a point of its fine-tuned roberta-base (94.0%). This repo adds the frontier-API side, with measured cost and latency, paired tests against the local models, and a classification-head LoRA small enough for a 4-core CPU.
+</details>
 
 <details>
 <summary>Prior work in more detail</summary>
 
-Numbers checked against ank018's README and stage docs on 2026-09-28: generative LoRA on Qwen3-1.7B reached 93.6% (seed sd 0.26 pts) against 94.0% (sd 0.23) for a full fine-tune of roberta-base at 9,387 training messages (p = 0.12, not significant). The LoRA model led by 8.9 points at 154 messages (2 per class), and the crossover sat between 308 and 616 messages. It also found that 13.8% of test messages have a same-label near twin in its training pool, and that the full-vs-clean gap shrank with more data and appeared for zero-shot too, so it tracked easy messages rather than memorisation. This repo finds the same pattern against all 10,003 training messages. Near twins with a different label stay in the dedup subset, as a small direct view of label noise.
+On the same test set, the LogReg row here is within a point of ank018's fine-tuned roberta-base (94.0%). Numbers checked against ank018's README and stage docs on 2026-09-28: generative LoRA on Qwen3-1.7B reached 93.6% (seed sd 0.26 pts) against 94.0% (sd 0.23) for a full fine-tune of roberta-base at 9,387 training messages (p = 0.12, not significant). The LoRA model led by 8.9 points at 154 messages (2 per class), and the crossover sat between 308 and 616 messages. It also found that 13.8% of test messages have a same-label near twin in its training pool, and that the full-vs-clean gap shrank with more data and appeared for zero-shot too, so it tracked easy messages rather than memorisation. This repo finds the same pattern against all 10,003 training messages. Near twins with a different label stay in the dedup subset, as a small direct view of label noise.
 
 </details>
 
@@ -220,19 +236,22 @@ flowchart LR
 | A classification head, not generation | One forward pass per message, no output parsing, and real probabilities for calibration. |
 | LoRA settings from "LoRA Without Regret" | Adapters on every linear layer, rank 16 with alpha 32, batch 16, and a learning rate about 10x full fine-tuning's. |
 | Qwen3-0.6B-Base | A text-only base model small enough to train on 4 CPU cores. |
-| ModernBERT-base | The fine-tuned encoder baseline, at settings inside its authors' GLUE grid. |
 | Qwen3-8B-Base with QLoRA on a rented A10G | An 8B model won't train on 4 CPU cores in any useful time. |
-| bge-small | Frozen-embedding baseline and retrieval, from one set of embeddings. |
 | Retrieval-augmented prompting, 20 examples | The kNN row votes over the same 20 neighbours, which shows what the LLM adds. |
+| Dev from train, never test | Test is scored once per final config. |
+
+<details>
+<summary>Seven more decisions, details and sources</summary>
+
+| Decision | Why |
+|---|---|
+| ModernBERT-base | The fine-tuned encoder baseline, at settings inside its authors' GLUE grid. |
+| bge-small | Frozen-embedding baseline and retrieval, from one set of embeddings. |
 | One static prefix for every prompt | The provider's prompt cache bills it at the cached rate. |
 | Structured outputs | A strict JSON-schema enum of the 77 names forces a valid label. |
 | Harness clients for every call | Cached reruns, retries, a tokens-per-minute pacer and a hard dollar cap. |
-| Dev from train, never test | Test is scored once per final config. |
 | Latency with the adapter unmerged | The reported numbers use the model exactly as trained. |
 | No RL fine-tuning | One verifiable label per message is already full supervision. |
-
-<details>
-<summary>Details and sources</summary>
 
 - **A classification head, not generation.** The LoRA model reads the message and a linear head over the last token's hidden state scores the 77 intents (`AutoModelForSequenceClassification`, PEFT `task_type=SEQ_CLS`). ank018/lora-banking77 trained generative LoRA and found output formatting took thousands of examples to learn.
 - **LoRA settings from "LoRA Without Regret"** (Schulman and Thinking Machines Lab, 2025, [thinkingmachines.ai/blog/lora](https://thinkingmachines.ai/blog/lora/)): adapters on every linear layer including the MLP (attention-only LoRA underperforms), rank 16 with alpha 32 (the 1/r scaling makes the best learning rate nearly independent of rank), batch size 16 (LoRA pays more than full fine-tuning for large batches), and a learning rate about 10x what full fine-tuning would use. The sweep tries 1e-4 and 3e-4, 10x the usual 1e-5 to 3e-5 range, on a 2,000-message stratified subset with one seed, and picks by dev accuracy. LoRA itself is Hu et al. 2021 ([arXiv 2106.09685](https://arxiv.org/abs/2106.09685)).
@@ -256,13 +275,21 @@ The learning curve was meant to test whether an LLM's prior knowledge helps most
 
 | Tried | What happened | Now |
 |---|---|---|
+| Timing on a shared machine | Oversubscribed CPU threads slowed PyTorch far more than the load alone suggests. | Long runs and the timing table redone on an idle Azure D4s v6. The LogReg and kNN latencies are still from the loaded machine, so they and their costs are upper bounds. |
+
+<details>
+<summary>Six more fixes</summary>
+
+| Tried | What happened | Now |
+|---|---|---|
 | Random batches | The first timing run spent a large share of its compute on padding. | Length-grouped batches: shuffle, sort within chunks of 50 batches, shuffle the batches. |
 | sdpa attention for ModernBERT on CPU | 11.6 examples/s against 14.7 for eager at batch 32, in the exploratory timing. | Eager attention. |
 | An fp32 frozen base under autocast for the LoRA model | About 9% slower than a bf16 base, and twice the memory. | bf16 base. |
 | A LogReg C grid that stopped at 100 | Two learning-curve fits picked C = 100, the edge of the grid. | The grid reaches 1,000. One fit (20 per class, draw 2) then picked 1,000, only 0.3 dev points above C = 100. The full-data fit picks 10. |
 | Casting the fine-tuned ModernBERT to bf16 for inference | `.to(torch.bfloat16)` also rounds buffers, and the cast model disagreed with the same checkpoint reloaded from disk. | Full fine-tunes predict with fp32 weights under bf16 autocast. A reloaded checkpoint matches to within 5e-6 in probability. |
 | ModernBERT's `reference_compile` flag | transformers 5 removed it, so the first load failed. | The model runs uncompiled. |
-| Timing on a shared machine | Oversubscribed CPU threads slowed PyTorch far more than the load alone suggests. | Long runs and the timing table redone on an idle Azure D4s v6. The LogReg and kNN latencies are still from the loaded machine, so they and their costs are upper bounds. |
+
+</details>
 
 <details>
 <summary>The learning curve in more detail</summary>

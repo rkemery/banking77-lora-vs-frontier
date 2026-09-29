@@ -32,7 +32,7 @@ from b77.prompting import (
     user_turn,
 )
 
-OUTPUT_TOKENS = 14  # {"label":"card_arrival"} is about 8; the longest label about 18
+OUTPUT_TOKENS = 14  # {"label":"card_arrival"} is about 8, the longest label about 18
 CACHE_MIN_PREFIX = 1024  # OpenAI prompt caching starts at 1,024 identical prefix tokens
 
 

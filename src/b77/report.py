@@ -18,7 +18,7 @@ from llm_eval_harness.stats import mde_paired_binary, paired_bootstrap
 
 from b77 import plan
 from b77.data import N_CLASSES
-from b77.metrics import expected_calibration_error, latency_percentiles, summarize
+from b77.metrics import N_BOOT, expected_calibration_error, latency_percentiles, summarize
 from b77.runs import RUNS_DIR, SWEEP_PATH, Run, load_run, run_exists
 from b77.splits import LEARNING_CURVE_K, LEARNING_CURVE_SEEDS, read_splits
 from b77.timing import read_timing
@@ -478,14 +478,10 @@ def break_even(full: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
     return out
 
 
-def break_even_lines(rows: list[dict[str, Any]]) -> list[str]:
+def break_even_table(rows: list[dict[str, Any]]) -> str:
     if not rows:
-        return []
+        return ""
     lines = [
-        "**Break-even utilization.** A rented box costs the same per hour busy or idle, and the "
-        "API bills per call. So a local arm is only cheaper while its box is busy for more than "
-        "(local cost / API cost) of the time, training excluded.",
-        "",
         "| Local arm | Cost per 1k, fully busy | API arm | Cost per 1k | Local is cheaper |",
         "|---|---|---|---|---|",
     ]
@@ -496,7 +492,22 @@ def break_even_lines(rows: list[dict[str, Any]]) -> list[str]:
             f"| {r['local']} ({r['local_on']}) | {fmt_cost(r['local_cost_per_1k_usd'])} "
             f"| {r['api']} | {fmt_cost(r['api_cost_per_1k_usd'])} | {when} |"
         )
-    return lines
+    return "\n".join(lines)
+
+
+def break_even_blocks(rows: list[dict[str, Any]]) -> list[str]:
+    """The luna rows in view and the sol rows collapsed."""
+    if not rows:
+        return []
+    luna = [r for r in rows if r["api"] == plan.RUN_LUNA_FEW]
+    other = [r for r in rows if r["api"] != plan.RUN_LUNA_FEW]
+    return [
+        "**Break-even utilization.** A local arm is only cheaper than an API while its box is "
+        "busy for more than (local cost / API cost) of the time, since the box bills by the "
+        "hour and the API by the call (training excluded).",
+        break_even_table(luna),
+        details("Break-even against gpt-6-sol", [break_even_table(other)]),
+    ]
 
 
 def dedup_line(full: dict[str, dict[str, Any]]) -> list[str]:
@@ -546,15 +557,15 @@ def headline(summary: dict[str, Any]) -> str:
             f"{100 * s6['diff']:.1f} points ({pct(s6['candidate_accuracy'])} vs "
             f"{pct(s6['baseline_accuracy'])} on {s6['n']:,} test messages, McNemar "
             f"p={_fmt_p(s6['p'])}, Holm-adjusted {_fmt_p(s6['holm_p'])}), at about "
-            f"{arms_[sol]['cost_per_1k_usd'] / arms_[lf]['cost_per_1k_usd']:.0f}x the "
-            f"per-prediction cost of gpt-6-luna with the same examples. Luna few-shot "
+            f"{arms_[sol]['cost_per_1k_usd'] / arms_[lf]['cost_per_1k_usd']:.0f}x luna's cost. "
+            f"Luna few-shot "
             f"(p={_fmt_p(lf6['p'])}) and the Qwen3-8B QLoRA (p={_fmt_p(q86['p'])}, "
             f"{_fmt_p(q86['holm_p_secondary'])} after Holm over the secondary pairs) can't be "
             f"separated from the 0.6B.",
-            f"- **Logistic regression on frozen bge-small embeddings** costs "
-            f"{fmt_cost(arms_[lr]['cost_per_1k_usd'])} per 1k predictions, trains in "
-            f"{arms_[lr]['train_minutes'] * 60:.0f} s, and is at most {at_most((lr, Q06))} "
-            f"points below the 0.6B LoRA (95% CI).",
+            f"- **Logistic regression on frozen bge-small embeddings** is **at most "
+            f"{at_most((lr, Q06))} points below** the 0.6B LoRA (95% CI), costs "
+            f"{fmt_cost(arms_[lr]['cost_per_1k_usd'])} per 1k predictions and trains in "
+            f"{arms_[lr]['train_minutes'] * 60:.0f} s.",
             f"- **A local model is only cheaper than luna few-shot while it stays busy:** above "
             f"{util((Q06, lf))} utilization for the 0.6B's CPU box and {util((q8, lf))} for the "
             f"8B's A10G. One seed per model and one run per API arm.",
@@ -623,6 +634,8 @@ def timing_lines(timing: dict[str, Any] | None) -> list[str]:
 def details(summary: str, blocks: list[str]) -> str:
     """A collapsed block. The blank line after </summary> lets GitHub render tables inside."""
     inner = "\n\n".join(b for b in blocks if b)
+    if not inner:
+        return ""
     return f"<details>\n<summary>{summary}</summary>\n\n{inner}\n\n</details>"
 
 
@@ -653,25 +666,30 @@ def build(runs_dir: Path = RUNS_DIR) -> tuple[str, dict[str, Any]]:
     blocks = [
         results_table(rows, n_dedup),
         "n = 3,080 test items (40 per class) for every row, with 95% percentile bootstrap CIs "
-        "over items. The dedup column drops the "
+        f"over items ({N_BOOT:,} resamples). The dedup column drops the "
         f"{dedup['same_label_twins']} test items whose nearest training message has the same "
         f"label at character n-gram cosine >= {dedup['threshold']:.2f}.",
-        "\n".join(dedup_line(full)),
-        "\n".join(break_even_lines(be)),
+        *break_even_blocks(be),
         "**Paired comparisons** on the same 3,080 items (accuracy, candidate minus baseline). "
-        "CI from a paired bootstrap, p from the exact McNemar test, MDE is the smallest "
-        "difference this pair could detect with 80% power (harness `stats`). Holm p is over "
-        "the primary family, {0.6B LoRA, 8B QLoRA} x {luna few-shot, sol few-shot}, named "
-        "after the results were in. Every fine-tune here has one seed and every API arm ran "
-        "once, so seed-to-seed and run-to-run variance isn't in these CIs.",
+        "Holm p is over the primary family, {0.6B LoRA, 8B QLoRA} x {luna few-shot, "
+        "sol few-shot}, named after the results were in. Every fine-tune here has one seed "
+        "and every API arm ran once, so seed-to-seed and run-to-run variance isn't in these "
+        "CIs.",
         "\n".join(paired_rows(comps, PRIMARY_PAIRS)),
         details(
             "Secondary pairs (unadjusted p)",
-            ["\n".join(paired_rows(comps, SECONDARY_PAIRS)), "\n".join(family_lines(comps))],
+            [
+                "In both tables, CI is from a paired bootstrap, p from the exact McNemar test, "
+                "and MDE is the smallest difference the pair could detect with 80% power "
+                "(harness `stats`).",
+                "\n".join(paired_rows(comps, SECONDARY_PAIRS)),
+                "\n".join(family_lines(comps)),
+            ],
         ),
         details(
-            "Cost and latency assumptions, one-off spend",
+            "Dedup gap, cost and latency assumptions, one-off spend",
             [
+                "\n".join(dedup_line(full)),
                 "ECE is top-label expected calibration error with 15 bins (the kNN row's "
                 "confidence is its winning vote share, not a probability). API latency is one "
                 "request over the network and API cost is from measured token usage at list "

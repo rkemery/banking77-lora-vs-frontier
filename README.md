@@ -225,7 +225,7 @@ Computed 2026-09-28 by `make estimate`. Token counts: Qwen3 tokenizer as a proxy
 
 The binding limit is time, not money. At the tokens-per-minute capacity the deployments had on 2026-09-28 (luna 20K, sol 10K), the pacer spreads the three arms over roughly 5 to 13 hours. The two luna arms share one deployment, so run them one after the other (each process paces itself and does not know about the other). The sol arm can run at the same time. Raising a deployment's capacity for the run shortens it without changing any price, and `--tpm` tells the pacer the new limit.
 
-The local runs cost CPU time only. See the timing lines at the end of the results section.
+The CPU runs cost VM time only, and the 8B QLoRA cost about $0.55 of A10G time to train on Hugging Face Jobs. See the spend and timing lines in the results section.
 
 ## Running everything
 

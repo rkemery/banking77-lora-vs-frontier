@@ -4,7 +4,7 @@ A 0.6B open model with a LoRA classification head, trained on a small cloud CPU 
 Every arm is scored on the same 3,080 test messages with accuracy, macro-F1, paired significance tests, latency and cost per 1,000 predictions.
 
 <!-- headline:start -->
-**The short answer.** gpt-6-sol with 20 retrieved examples beats the Qwen3-0.6B LoRA by 1.2 points (95.0% vs 93.8%, McNemar p=0.001, Holm-adjusted 0.005), at about 20x the per-prediction cost of gpt-6-luna with the same examples. Neither luna few-shot (p=0.251) nor the Qwen3-8B QLoRA (p=0.040, 0.160 after Holm) can be separated from the 0.6B, and logistic regression on frozen bge-small embeddings ($0.0010 per 1k, 2 s to train) is at most 1.2 points below it and beats it at 5 to 20 examples per class. A local model is only cheaper than the API while it stays busy: above 8.5% utilization for the 0.6B's CPU box and 66.3% for the 8B's A10G, both against luna few-shot.
+**The short answer.** gpt-6-sol with 20 retrieved examples beats the Qwen3-0.6B LoRA by 1.2 points (95.0% vs 93.8%, McNemar p=0.001, Holm-adjusted 0.005), at about 20x the per-prediction cost of gpt-6-luna with the same examples. Neither luna few-shot (p=0.251) nor the Qwen3-8B QLoRA (p=0.040, 0.160 after Holm over the secondary pairs) can be separated from the 0.6B, and logistic regression on frozen bge-small embeddings ($0.0010 per 1k, 2 s to train) is at most 1.2 points below it and beats it at 5 to 20 examples per class. A local model is only cheaper than the API while it stays busy: above 8.5% utilization for the 0.6B's CPU box and 66.3% for the 8B's A10G, both against luna few-shot.
 <!-- headline:end -->
 
 ## Results
